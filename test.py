@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3.4
+#!/usr/bin/python3.4
 # -*- coding: UTF-8 -*-
 import math
 
@@ -40,8 +40,74 @@ def fact(n):
 
 print(fact(4))
 '''
+
+'''
 g = [x * x for x in range(10) ]
 print(g)
 g = (x * x for x in range(10) )
 for n in g:
 	print(n)
+'''
+
+'''
+def fun1():
+	x = 5
+	def fun2():
+		nonlocal x
+		x *= x
+		return x
+	return(fun2())
+
+print(fun1())
+'''
+'''
+#lambda
+g = lambda x,y : 2 * x +y
+print(g(5,7))
+'''
+#fliter
+
+
+'''
+def myFun(x):
+	if x == 1:
+		return x
+	else:
+		return x * myFun(x - 1)
+
+def myFun2(x):
+	result = x
+	for i in range(1,x):
+		result *= i
+	return result
+
+#print(myFun2(10)) 
+print(myFun(5)) 
+'''
+
+def FBOLAQI(x):
+	n1 = 1 
+	n2 = 1
+	n3 = 1
+	if x < 1:
+		print('input err :',x)
+		return -1
+	while x > 2:
+		n3 = n1 + n2
+		n1 = n2
+		n2 = n3
+		x -= 1
+	return n3
+
+def FBOLAQI2(x):
+	if x < 1:
+		print('input err :',x)
+		return -1
+	if x == 2 or x == 1:
+		return 1
+	else:
+		return FBOLAQI2(x - 1) + FBOLAQI2(x -2)
+		
+
+print(FBOLAQI(35))
+print(FBOLAQI2(35))
