@@ -1,14 +1,24 @@
 #!/usr/bin/python3.4
 
-import urllib.request
+#import urllib.request
+from urllib import request
 
 
 url = 'http://whatismyip.com.tw'
 
-proxy_support = urllib.request.ProxyHandler({'http':'115.159.50.56:808'})
-opener = urllib.request.build_opener(proxy_support)
-urllib.request.install_opener(opener)
-response = urllib.request.urlopen(url)
+proxy = {'http':'115.159.50.56:808'}
+#proxy_support = request.ProxyHandler(proxy)
 
-html = response.read().decode('utf-8') 
-print(html) 
+#opener = request.build_opener(proxy_support)
+#request.install_opener(opener)
+response = request.Request(url)
+
+response.add_header('User-Agent','Mozilla/5.0 (Windows NT 6.1; WOW64; rv:38.0) Gecko/20100101 Firefox/38.0')
+
+with request.urlopen(response) as f:
+	for k,v in f.getheaders():
+		print(' %s : %s ' %(k,v))
+	result = f.read()
+
+
+print(result.decode('utf-8')) 
