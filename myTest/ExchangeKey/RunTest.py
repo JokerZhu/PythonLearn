@@ -2,14 +2,12 @@
 import os
 import time
 import socket
-from array import * 
 
 
 #HSM的IP地址
 IP = 'XXX.XXX.XXX.XXX'
 #HSM的端口
 PORT = 10002 
-
 #源SEK
 SEKSOURCE = '0018'
 #目的SEK
@@ -17,6 +15,9 @@ SEKDEST = '0018'
 #中间TEK
 TEK = '0001'
 
+#源文件名
+SOURCEFILE = 'source.txt'
+DESTEFILE = 'dest.txt'
 
 #加密机通讯函数
 def SendData(data): 
@@ -62,9 +63,10 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 	else:
 		print('parameters error !')
 		return ['-1','parameters error']
-
+	#拼接命令
 	CMD = ('KES%sT%s%d%s%s' % (SEK,TEK,type,keyType,inputKey ))
 #	print('CMD = ',CMD)
+	#收发数据
 	result = SendData(CMD).decode()
 #	print('result = %s' % result)
 	returnCode = result[2:4]
@@ -86,6 +88,18 @@ def ExchangeKey(sourceKey):
 
 
 if __name__ == '__main__':
-	
-	result = ExchangeKey('8EBB00D03EAD89148EBB00D03EAD8914')
-	print (result)
+	#循环从文件中读取一行数据，放到一个list里
+	fp = open(SOURCEFILE,'r')
+	l =  fp.readlines()
+	for i in l :
+		lines = i.split()
+		try:
+			print(lines[4])
+		except Exception as e:
+			print(e)
+	fp.close()
+	#如果有上级主密钥，则发到加密机进行转KEY
+
+	#将结果写到目标文件内
+#	result = ExchangeKey('8EBB00D03EAD89148EBB00D03EAD8914')
+#	print (result)
