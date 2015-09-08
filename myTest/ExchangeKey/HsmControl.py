@@ -6,7 +6,7 @@ import socket
 
 
 #HSM的IP地址
-IP = 'XXX.XXX.XXX.XXX'
+IP = '211.147.236.34'
 #HSM的端口
 PORT = 10002 
 #源SEK
@@ -21,7 +21,10 @@ TEK = '0001'
 SOURCEFILE = 'source.txt'
 DESTFILE = 'dest.txt'
 
-#加密机通讯函数
+#加密机数据收发函数
+#功能:将发送给加密机的数据加上消息长度并发送
+#	data:需要发送给加密机的数据
+#	返回:从加密机返回来的数据
 def SendData(data): 
 	'''
 	global  fd 
@@ -44,6 +47,7 @@ def SendData(data):
 
 
 #加密机KE命令
+#功能:拼装加密机KE指令，并发送到加密机
 #	type(0/1): 0从SEK到TEK   1从TEK到SEK
 #	SEK:加密机中的SEK密钥索引
 #	TEK:加密机中TEK的密钥索引
@@ -81,6 +85,9 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 
 
 #转密钥函数
+#功能:将源SEK加密的密钥转成目标SEK加密的密钥
+#	sourceKey:使用源SEK加密的密钥
+#	返回:返回一个list list[0]为加密机返回码+自定义返回码 list[1]为错误原因或者转出来的结果 
 def ExchangeKey(sourceKey):
 	#1、调KE命令先将密钥转成使用TEK加密
 	result = HsmCmdKE(0,SEKSOURCE,TEK,sourceKey)
@@ -91,12 +98,20 @@ def ExchangeKey(sourceKey):
 	return result
 
 #进度条显示函数
+#功能:显示一个进度条
+#	now:当前进度
+#	sum:总数
+#	返回:无
 def ViewBar(now = 1,sum = 100):
 	barLen = 100
 	hashtag = '#' * int(now / sum * barLen)
 	space  = ' ' * int(barLen - (int(now / sum * barLen) )) 
 	sys.stdout.write('\r[%s] %.2f%%  the [%d] end' % (hashtag + space, (now/sum) * 100,now) )
 	pass
+
+#密钥转换函数
+#功能:将从文件中读出数据，再进行转密钥，并把结果写入目标文件
+#返回: 0为成功，其他为失败
 
 def StartExchangeKeys():
 	global  fd 
@@ -133,13 +148,14 @@ def StartExchangeKeys():
 	except FileNotFoundError:
 		fd.close()
 		print('here is no file named [%s]' % SOURCEFILE)
+		return -1
 	#如果有上级主密钥，则发到加密机进行转KEY
 	#将结果写到目标文件内
 
 #	result = ExchangeKey('8EBB00D03EAD89148EBB00D03EAD8914')
-#	print (result)
-
+	print ('\n')
 	fd.close()
+	return 0
 
 if __name__ == '__main__':
 	StartExchangeKeys()
