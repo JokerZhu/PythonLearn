@@ -1,4 +1,5 @@
 #!/usr/bin/python3.4
+#-*- coding:utf-8 -*-
 import os
 import sys
 import time
@@ -10,16 +11,26 @@ IP = '211.147.236.34'
 #HSM的端口
 PORT = 10002 
 #源SEK
-SEKSOURCE = '0018'
+SEKSOURCE = '0024'
 #目的SEK
-SEKDEST = '0018'
+SEKDEST = '0007'
 #中间TEK
 TEK = '0001'
 
 
 #源文件名
 SOURCEFILE = 'source.txt'
+TMPFILE = 'tmp.txt'
 DESTFILE = 'dest.txt'
+
+#创建TCP链接函数
+#功能:创建socket 并connect加密机
+def CreatTcpConntion():
+	global  fd 
+	#创建socket
+	fd = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+	#connect对端
+	fd.connect((IP,PORT))
 
 #加密机数据收发函数
 #功能:将发送给加密机的数据加上消息长度并发送
@@ -114,15 +125,10 @@ def ViewBar(now = 1,sum = 100):
 #返回: 0为成功，其他为失败
 
 def StartExchangeKeys():
-	global  fd 
-	#创建socket
-	fd = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-	#connect对端
-	fd.connect((IP,PORT))
 	i = 0
 	#循环从文件中读取一行数据，放到一个list里
 	try:
-		with open(SOURCEFILE,'r') as fileIn ,open(DESTFILE,'w') as fileOut:
+		with open(SOURCEFILE,'r') as fileIn ,open(TMPFILE,'w') as fileOut:
 			try:
 				l =  fileIn.readlines()
 				sum = len(l)
@@ -142,20 +148,73 @@ def StartExchangeKeys():
 					fileOut.writelines(['%s|' % item for item in lines])
 					fileOut.writelines('\n' )
 					ViewBar(i,sum)
-					
 			finally:
 				fileIn.close()
 	except FileNotFoundError:
-		fd.close()
 		print('here is no file named [%s]' % SOURCEFILE)
 		return -1
-	#如果有上级主密钥，则发到加密机进行转KEY
-	#将结果写到目标文件内
+	#排序:将错误的排到文件尾
+	'''
+	try:
+		with open(TMPFILE,'r') as fileTmp,open(DESTFILE,'w') as fileDest:
+	except FileNotFoundError:
+		print('here is no file named [%s] or [%s]' %(TMPFILE,DESTFILE) )
+		return -1
+	'''
+	
 
-#	result = ExchangeKey('8EBB00D03EAD89148EBB00D03EAD8914')
 	print ('\n')
-	fd.close()
 	return 0
 
+def sedDataToHsm():
+	while(1):
+		data = input('please in put you cmd(\'exit\' for exit) :')
+		if data == 'exit':
+			return 0
+		else:
+			returnData = SendData(data)
+			print('return code : %s return message : %s ' % (returnData[2:4].decode(), returnData[4:len(returnData)].decode()))
+	pass
+def changeHsmInfo():
+	print('in changeHsmInfo')
+	pass
 if __name__ == '__main__':
-	StartExchangeKeys()
+	switch = {1:StartExchangeKeys,2:sedDataToHsm,3:changeHsmInfo}
+
+	os.system('clear')
+	print('string.....')
+	CreatTcpConntion()
+	print('HSM connect succes.\n\ncurrent HSM IP = [%s] PORT = [%s] ' % (IP,PORT))
+	while(1):
+		print('%s start %s' % ('=' * 60,'=' * 60) )
+		print('\tplease input what you want to do:')
+		print('\t0、exit.')
+		print('\t1、start exchange term masterkey of POSP.')
+		print('\t2、send CMD to HSM server.')
+		print('\t3、change HSM ip and port.')
+		
+		try:
+			inputCmd = int(input('my choice:'))
+			if 0 == inputCmd:
+				break
+		except ValueError:
+			print('input error,please reinput!!')
+			continue
+			
+		print('you chose :',inputCmd)
+		try:
+			switch[inputCmd]()
+		except KeyError:
+			print('input error,please reinput!!')
+			continue
+	
+	
+	'''
+	if StartExchangeKeys() < 0:
+		print('StartExchangeKeys error ')
+		fd.close()
+		return 0
+	'''
+	fd.close()
+
+	pass
