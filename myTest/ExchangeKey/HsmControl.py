@@ -8,9 +8,9 @@ import ipaddress
 
 
 #HSM的IP地址
-global IP
+IP = 'XXX.XXX.XXX.XXX'
 #HSM的端口
-global PORT
+PORT = 10002 
 #源SEK
 SEKSOURCE = '0024'
 #目的SEK
@@ -24,6 +24,51 @@ SOURCEFILE = 'source.txt'
 TMPFILE = 'tmp.txt'
 DESTFILE = 'dest.txt'
 
+errorMap = {'00':'正确', 
+'01':'无主密钥', 
+'02':'无工作密钥1', 
+'03':'无工作密钥2', 
+'04':'工作密钥1奇偶校验错', 
+'05':'工作密钥2奇偶校验错', 
+'06':'无老的主密钥', 
+'10':'口令错', 
+'11':'密码机不在授权状态', 
+'12':'没有插IC卡(从串行口进入密钥管理时要插A卡)', 
+'13':'写IC卡错', 
+'14':'读IC卡错', 
+'15':'IC卡不配套', 
+'16':'打印机没准备好', 
+'17':'IC卡未格式化', 
+'18':'打印格式没定义', 
+'20':'MAC校验错', 
+'21':'MAC标志指示域错', 
+'22':'密钥长度与使用模式不符', 
+'23':'MAC模式指示域错', 
+'24':'数据长度指示域错（不为8的倍数、大于8192字节）', 
+'26':'加密模式指示域错', 
+'27':'加解密标志错', 
+'28':'PIN格式错', 
+'29':'PIN检查长度大于实际PIN长度', 
+'31':'工作密钥1标志错', 
+'32':'工作密钥2标志错', 
+'33':'工作密钥索引错', 
+'34':'密钥离散次数错', 
+'35':'PIN参考值校验错', 
+'36':'主帐号参考值校验错', 
+'37':'PIN校验错', 
+'38':'PIN长度错（小于4或者大于12）', 
+'39':'CVN标志错', 
+'40':'DES算法模块错误', 
+'41':'SSF33算法模块错误', 
+'60':'无此命令', 
+'61':'消息太短', 
+'62':'消息太长', 
+'63':'消息检查值错', 
+'76':'子网掩码无效', 
+'77':'非法字符', 
+'78':'文件尾', 
+'79':'客户IP地址语法错'} 
+
 #创建TCP链接函数
 #功能:创建socket 并connect加密机
 def CreatTcpConntion():
@@ -31,12 +76,17 @@ def CreatTcpConntion():
 	#创建socket
 	fd = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 	#connect对端
-	fd.connect((IP,PORT))
+	try:
+		fd.connect((IP,PORT))
+	except ConnectionRefusedError:
+#		print('can\'t connect your ip/port')
+		return -1
+	return 0
 
 def ReCreatTcpConntion():
 	fd.close()
 	print('reconntioning....ip =[%s] port = [%d]' % (IP,PORT))
-	CreatTcpConntion()
+	return  CreatTcpConntion()
 	pass
 #加密机数据收发函数
 #功能:将发送给加密机的数据加上消息长度并发送
@@ -74,10 +124,10 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 	#参数检查
 	if type not in typeList:
 		print('type err %d!!  should(0/1) ' % type )
-		return ['-1','type err']
+		return ['-1','type err','']
 	if SEK =='' or TEK == '' or inputKey == '':
 #		print('parameters error !')
-		return ['-1','input key empty']
+		return ['-1','input key empty','']
 	#参数检查
 	if(len(inputKey) == 16):
 		keyType = 'X'
@@ -87,7 +137,7 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 		keyType = 'Z'
 	else:
 #		print('parameters error !')
-		return ['-2','key len = %s error' % len(inputKey)]
+		return ['-2','key len = %s error' % len(inputKey),'']
 	#拼接命令
 	CMD = ('KES%sT%s%d%s%s' % (SEK,TEK,type,keyType,inputKey ))
 #	print('CMD = ',CMD)
@@ -96,9 +146,9 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 #	print('result = %s' % result)
 	returnCode = result[2:4]
 	if returnCode != '00':
-		return [returnCode,'']
+		return [returnCode,errorMap[returnCode],'']
 	else:
-		return [returnCode,result[4:len(result) - 16]]
+		return [returnCode,errorMap[returnCode],result[4:len(result) - 16]]
 
 
 #转密钥函数
@@ -114,7 +164,7 @@ def ExchangeKey(sourceKey,type = 1 ):
 		if('00' != result[0]):
 			return result
 		#2、再调KE命令将密钥转成使用目的SEK加密
-		result = HsmCmdKE(1,SEKDEST,TEK,result[1])
+		result = HsmCmdKE(1,SEKDEST,TEK,result[2])
 		return result
 	else:
 		#1、调KE命令先将密钥转成使用TEK加密
@@ -122,7 +172,7 @@ def ExchangeKey(sourceKey,type = 1 ):
 		if('00' != result[0]):
 			return result
 		#2、再调KE命令将密钥转成使用目的SEK加密
-		result = HsmCmdKE(1,SEKSOURCE,TEK,result[1])
+		result = HsmCmdKE(1,SEKSOURCE,TEK,result[2])
 		return result
 
 #进度条显示函数
@@ -134,7 +184,7 @@ def ViewBar(now = 1,sum = 100):
 	barLen = 100
 	hashtag = '#' * int(now / sum * barLen)
 	space  = ' ' * int(barLen - (int(now / sum * barLen) )) 
-	sys.stdout.write('\r[%s] %.2f%%  the [%d] end' % (hashtag + space, (now/sum) * 100,now) )
+	sys.stdout.write('\r[%s] %.2f%%   %d/%d ' % (hashtag + space, (now/sum) * 100,now,sum) )
 	pass
 
 #密钥转换函数
@@ -149,7 +199,7 @@ def StartExchangeKeys():
 			try:
 				l =  fileIn.readlines()
 				sum = len(l)
-				print('sum of need to exchange keys: ',sum)
+#				print('sum of need to exchange keys: ',sum)
 				for line in l :
 					i += 1
 					line = line.strip('\n')
@@ -183,8 +233,6 @@ def StartExchangeKeys():
 		print('here is no file named [%s] or [%s]' %(TMPFILE,DESTFILE) )
 		return -1
 	'''
-	
-
 	print ('\n')
 	return 0
 
@@ -198,6 +246,12 @@ def sedDataToHsm():
 			print('return code : %s return message : %s ' % (returnData[2:4].decode(), returnData[4:len(returnData)].decode()))
 	pass
 def changeHsmInfo():
+	global IP
+	global PORT
+
+	ipBak = IP
+	portBak = PORT
+
 	ip = input('please input your ip:')
 	port = input('please input your port:')
 	try:
@@ -214,7 +268,14 @@ def changeHsmInfo():
 		return -1
 
 	
-	ReCreatTcpConntion()
+	if ReCreatTcpConntion() < 0:
+		print('can\'t connect ip [%s] port [%d]' % (IP,PORT) )
+		print('connecting defult ip [%s] port [%d]' % (ipBak,portBak))
+		IP = ipBak
+		PORT = portBak
+		return ReCreatTcpConntion()
+	else:
+		pass
 
 	pass
 
@@ -224,7 +285,7 @@ def oldToNew():
 		if inputData == 'exit':
 			return 0
 		result = ExchangeKey(inputData)
-		print('return code = [%s],return key = [%s].' % (result[0],result[1]))
+		print('code = [%s],msg = [%s],key = [%s].' % (result[0],result[1],result[2]))
 	
 	pass
 def newToOld():
@@ -233,20 +294,20 @@ def newToOld():
 		if inputData == 'exit':
 			return 0
 		result = ExchangeKey(inputData,2)
-		print('return code = [%s],return key = [%s].' % (result[0],result[1]))
+		print('code = [%s],msg = [%s],key = [%s].' % (result[0],result[1],result[2]))
 	pass
 
 if __name__ == '__main__':
 	switch = {1:StartExchangeKeys,2:sedDataToHsm,3:changeHsmInfo,4:oldToNew,5:newToOld}
 
-	IP = 'XXX.XXX.XXX.XXX'
-	PORT = 10002 
+	global IP
+	global PORT
 
 	os.system('clear')
 	print('string.....')
 	CreatTcpConntion()
 	while(1):
-		print('\n\ncurrent HSM IP = [%s] PORT = [%s] ' % (IP,PORT))
+		print('\n\ncurrent HSM IP = [%s] PORT = [%d] ' % (IP,PORT))
 		print('%s start %s' % ('=' * 60,'=' * 60) )
 		print('\tplease input what you want to do:')
 		print('\t0、exit.')
@@ -270,14 +331,7 @@ if __name__ == '__main__':
 		except KeyError:
 			print('input error,please reinput!!')
 			continue
+		print('ret = ',ret)
+		continue
 	
-	
-	'''
-	if StartExchangeKeys() < 0:
-		print('StartExchangeKeys error ')
-		fd.close()
-		return 0
-	'''
 	fd.close()
-
-	pass
