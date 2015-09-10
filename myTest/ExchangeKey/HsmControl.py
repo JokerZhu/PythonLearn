@@ -4,12 +4,13 @@ import os
 import sys
 import time
 import socket
+import ipaddress
 
 
 #HSM的IP地址
-IP = '211.147.236.34'
+global IP
 #HSM的端口
-PORT = 10002 
+global PORT
 #源SEK
 SEKSOURCE = '0024'
 #目的SEK
@@ -32,6 +33,11 @@ def CreatTcpConntion():
 	#connect对端
 	fd.connect((IP,PORT))
 
+def ReCreatTcpConntion():
+	fd.close()
+	print('reconntioning....ip =[%s] port = [%d]' % (IP,PORT))
+	CreatTcpConntion()
+	pass
 #加密机数据收发函数
 #功能:将发送给加密机的数据加上消息长度并发送
 #	data:需要发送给加密机的数据
@@ -98,15 +104,26 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 #转密钥函数
 #功能:将源SEK加密的密钥转成目标SEK加密的密钥
 #	sourceKey:使用源SEK加密的密钥
+#	type:1:old到new 2:new 到old
 #	返回:返回一个list list[0]为加密机返回码+自定义返回码 list[1]为错误原因或者转出来的结果 
-def ExchangeKey(sourceKey):
-	#1、调KE命令先将密钥转成使用TEK加密
-	result = HsmCmdKE(0,SEKSOURCE,TEK,sourceKey)
-	if('00' != result[0]):
+#	
+def ExchangeKey(sourceKey,type = 1 ):
+	if 1 == type:
+		#1、调KE命令先将密钥转成使用TEK加密
+		result = HsmCmdKE(0,SEKSOURCE,TEK,sourceKey)
+		if('00' != result[0]):
+			return result
+		#2、再调KE命令将密钥转成使用目的SEK加密
+		result = HsmCmdKE(1,SEKDEST,TEK,result[1])
 		return result
-	#2、再调KE命令将密钥转成使用目的SEK加密
-	result = HsmCmdKE(1,SEKSOURCE,TEK,result[1])
-	return result
+	else:
+		#1、调KE命令先将密钥转成使用TEK加密
+		result = HsmCmdKE(0,SEKDEST,TEK,sourceKey)
+		if('00' != result[0]):
+			return result
+		#2、再调KE命令将密钥转成使用目的SEK加密
+		result = HsmCmdKE(1,SEKSOURCE,TEK,result[1])
+		return result
 
 #进度条显示函数
 #功能:显示一个进度条
@@ -154,6 +171,11 @@ def StartExchangeKeys():
 		print('here is no file named [%s]' % SOURCEFILE)
 		return -1
 	#排序:将错误的排到文件尾
+	CMD = 'grep  "|00|" %s > %s ' % (TMPFILE,DESTFILE)
+	os.system(CMD)
+	CMD = 'grep  -v "|00|" %s >> %s ' % (TMPFILE,DESTFILE)
+	os.system(CMD)
+#	os.sys('grep  -v "|00|" %s >> %s ' % (TMPFILE,DESTFILE))
 	'''
 	try:
 		with open(TMPFILE,'r') as fileTmp,open(DESTFILE,'w') as fileDest:
@@ -176,22 +198,63 @@ def sedDataToHsm():
 			print('return code : %s return message : %s ' % (returnData[2:4].decode(), returnData[4:len(returnData)].decode()))
 	pass
 def changeHsmInfo():
-	print('in changeHsmInfo')
+	ip = input('please input your ip:')
+	port = input('please input your port:')
+	try:
+		ipaddress.ip_address(ip)
+		IP = ip
+	except ValueError:
+		print('input ip error')
+		return -1
+	
+	try:
+		PORT = int(port)
+	except ValueError :
+		print('input port error')
+		return -1
+
+	
+	ReCreatTcpConntion()
+
 	pass
+
+def oldToNew():
+	while(1):
+		inputData = input('please input your key(exit to exit):')
+		if inputData == 'exit':
+			return 0
+		result = ExchangeKey(inputData)
+		print('return code = [%s],return key = [%s].' % (result[0],result[1]))
+	
+	pass
+def newToOld():
+	while(1):
+		inputData = input('please input your key(exit to exit):')
+		if inputData == 'exit':
+			return 0
+		result = ExchangeKey(inputData,2)
+		print('return code = [%s],return key = [%s].' % (result[0],result[1]))
+	pass
+
 if __name__ == '__main__':
-	switch = {1:StartExchangeKeys,2:sedDataToHsm,3:changeHsmInfo}
+	switch = {1:StartExchangeKeys,2:sedDataToHsm,3:changeHsmInfo,4:oldToNew,5:newToOld}
+
+	IP = 'XXX.XXX.XXX.XXX'
+	PORT = 10002 
 
 	os.system('clear')
 	print('string.....')
 	CreatTcpConntion()
-	print('HSM connect succes.\n\ncurrent HSM IP = [%s] PORT = [%s] ' % (IP,PORT))
 	while(1):
+		print('\n\ncurrent HSM IP = [%s] PORT = [%s] ' % (IP,PORT))
 		print('%s start %s' % ('=' * 60,'=' * 60) )
 		print('\tplease input what you want to do:')
 		print('\t0、exit.')
 		print('\t1、start exchange term masterkey of POSP.')
 		print('\t2、send CMD to HSM server.')
 		print('\t3、change HSM ip and port.')
+		print('\t4、old to new.')
+		print('\t5、new to old.')
 		
 		try:
 			inputCmd = int(input('my choice:'))
@@ -203,7 +266,7 @@ if __name__ == '__main__':
 			
 		print('you chose :',inputCmd)
 		try:
-			switch[inputCmd]()
+			ret = switch[inputCmd]()
 		except KeyError:
 			print('input error,please reinput!!')
 			continue
