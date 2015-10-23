@@ -5,6 +5,7 @@ import sys
 import time
 import socket
 import ipaddress
+import MySQLdb
 
 
 #HSM的IP地址
@@ -93,13 +94,6 @@ def ReCreatTcpConntion():
 #	data:需要发送给加密机的数据
 #	返回:从加密机返回来的数据
 def SendData(data): 
-	'''
-	global  fd 
-	#创建socket
-	fd = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-	#connect对端
-	fd.connect((IP,PORT))
-	'''
 	#首先发两个字节的长度
 	fd.sendall(('%c%c' %(chr(int(len(data)/256)),chr(int(len(data)%256))) ).encode() )
 	#再发送数据
