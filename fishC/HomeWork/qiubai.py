@@ -32,32 +32,21 @@ def GetDuanZi(html,no=10 ):
 def GetNextUrl():
 	pass
 
-def ReadQiubai():
+def ReadQiubai(number = 10):
 	l = []
 	url = 'http://www.qiushibaike.com/'
 	#打开糗百首页
 	html = OpenUrl(url).decode('utf-8')
 	#从糗百返回的网页中找到段子
-	a = 0
-	b = 0
-	tmp = 0
-	while True:
-		tmp = html[a:-1].find(r'class="content">')
-		if tmp != -1:
-			a += tmp
-			#print('a = %d b = %d'%(a,b))
-			b = html[a:-1].find(r'</div>')
-			#print(html[a+18:a+b-20])
-			print(html[a+17:a+b+17])
-			a += b
-			l.append()
-		else:
-			break
+	p = re.compile(r'class="content">([^"]+)<!')
+	l = p.findall(html) 
+	for each in l:
+		print(each)
 	#从糗百返回的网页中找到8小时内的链接
 
 
 def DisplayDuanzi(number= 10):
-	ReadQiubai();
+	ReadQiubai(number);
 
 	pass
 	
