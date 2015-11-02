@@ -33,6 +33,7 @@ def GetImgUrl(eachUrl):
 	currentList=[]
 	l = []
 	html = OpenUrl(eachUrl).decode('utf-8')
+	'''
 	a = html.find('img src=')
 	while a !=-1:
 		b = html.find('.jpg',a,a+80)
@@ -41,6 +42,9 @@ def GetImgUrl(eachUrl):
 		else:
 			b = a + 9
 		a = html.find('img src=',b)
+	'''
+	p = re.compile(r'img src="([^"]+\.jpg)"')
+	l = p.findall(html)
 	return l 
 	pass
 def SaveImg(folder,img_addr):
@@ -72,5 +76,5 @@ def DownLoadImg(Number=10):
 		SaveImg(os.getcwd(),each)
 	pass
 if __name__ == '__main__':
-	DownLoadImg()
+	DownLoadImg(1)
 #	SaveImg(os.getcwd(),'http://ww3.sinaimg.cn/mw600/005vbOHfgw1exjf3132w9j30m80xctdf.jpg')
