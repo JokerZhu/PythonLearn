@@ -58,9 +58,9 @@ def FindStrInFile(str,Path = '.'):
 			print('当前文件:',a)
 			f = open(a,'rb')
 			for line in f.readlines():
-				#print('在文件[%s]中找到关键字[%s]' % (a,str))
-				if
-				print('line = %s' % (line))
+				print('在文件[%s]中找到关键字[%s]' % (a,str))
+				#if
+		#		print('line = %s' % (line))
 		elif os.path.isdir(a):
 			FindStrInFile(str,a)
 	pass
