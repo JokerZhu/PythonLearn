@@ -16,10 +16,14 @@ Including another URLconf
 from django.conf.urls import include, url
 from django.contrib import admin
 from mysite.views import * 
+from mysite.books.views import * 
 
 urlpatterns = [
     url(r'^admin/', include(admin.site.urls)),
     url(r'^hello/$', hello),
     url(r'^$', homePage),
     url(r'^time$', current_datetime),
+    url(r'^url$', current_user_info),
+    url(r'^search-from/$', seach_from),
+    url(r'^search/$', search),
 ]

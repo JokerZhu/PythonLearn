@@ -18,5 +18,13 @@ def current_datetime(request):
 	t = get_template('current_datetime.html')
 	html = t.render(Context({'current_date':now}))
 	return HttpResponse(html)
-	
-	
+def current_user_info(request):
+	try:
+		addr = request.META['REMOTE_ADDR']
+		browser = request.META['HTTP_USER_AGENT']
+	except KeyError:
+		addr = 'unknow address'
+		browser = 'unknow browser'
+	return HttpResponse("welcome to my page, your ip is %s,brower is %s" % (addr,browser))
+
+
