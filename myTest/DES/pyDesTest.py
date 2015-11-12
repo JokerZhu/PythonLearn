@@ -1,9 +1,11 @@
 from binascii import unhexlify as unhex
 from pyDes import *
+import sys
+import os 
 
 
 def tripleDesEncrypt(tripleDesKey = '1234567890ABCDEF1234567890ABCDEF',sourceData='' ):
-	t1 = triple_des(unhex(tripleDesKey))
+	t1 = triple_des(unhex(tripleDesKey),CBC,'\0\0\0\0\0\0\0\0',pad=none ,padmode=PAD_NORMAL)
 	result = t1.encrypt(sourceData)
 	return result
 	pass
@@ -14,19 +16,19 @@ def bcdhexToaschex(bcdHex ):
 	return ascHex
 
 
-
-if __name__ == '__main__':
-	print('==============3DES=================')
+def tripleDes():
 	while(True):
 		result = ''
 		#输入key
-		key = input('please input your 3 des key : ')
-		print('len of your input key : %d' % len(key))
+		key = input('please input your 3 des key(q/Q for quit) : ')
+		if key == 'q' or key == 'Q':
+			break
+		#print('len of your input key : %d' % len(key))
 
 		if len(key) == 32 or len(key) == 48:
 			pass
 		else:
-			print('输入长度不正确\n')
+			print('input data len error\n')
 			continue
 		data = input('please input your data : ')
 		hexresult = tripleDesEncrypt(key,data)
@@ -36,7 +38,14 @@ if __name__ == '__main__':
 			#print('triple des succes \n len = %d resule = [%s]' % (len(hexresult),hexresult))
 			result =  bcdhexToaschex(hexresult)
 			print('result = ', result)
-	
+
+if __name__ == '__main__':
+	while(True):
+		os.system('clear')
+		print('=====================================================')
+		Input = input('please input what you want to do :' )
+		tripleDes()
+	pass
 
 
 
