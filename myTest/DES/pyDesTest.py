@@ -5,7 +5,7 @@ import os
 
 
 def tripleDesEncrypt(tripleDesKey = '1234567890ABCDEF1234567890ABCDEF',sourceData='' ):
-	t1 = triple_des(unhex(tripleDesKey),CBC,'\0\0\0\0\0\0\0\0',pad=none ,padmode=PAD_NORMAL)
+	t1 = triple_des(unhex(tripleDesKey),CBC,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
 	result = t1.encrypt(sourceData)
 	return result
 	pass
