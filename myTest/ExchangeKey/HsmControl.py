@@ -9,7 +9,8 @@ import MySQLdb
 
 
 #HSM的IP地址
-IP = 'XXX.XXX.XXX.XXX'
+#IP = 'XXX.XXX.XXX.XXX'
+IP = '211.147.236.34'
 #HSM的端口
 PORT = 10002 
 #源SEK
