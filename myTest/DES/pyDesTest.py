@@ -26,23 +26,32 @@ def tripleDesEncrypt(sourceData='',tripleDesKey = '1234567890ABCDEF1234567890ABC
 		else:
 			tmp = sourceData[i * 8 : (i + 1)*8]
 		#print('tmp len : ',len(tmp))
-		result += bcdhexToaschex(t1.encrypt(tmp))
+		d = t1.encrypt(tmp)
+		result += bcdhexToaschex(d)
+		print('d = %r' % d)
+		print(t1.decrypt(d))
+		#result += bcdhexToaschex(t1.encrypt(tmp))
 		#print('result = %s' % result)
 	return result
+
 def tripleDesDecrypt(data,tripleDesKey = '1234567890ABCDEF1234567890ABCDEF' ):
 	t1 = triple_des(unhex(tripleDesKey),CBC,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
 	#print('input :', data)
-	bcd =  ascTobcdhex(data[0:16])
+	#bcd =  ascTobcdhex(data[0:16])
+	bcd = bytes(data.encode())
+	print('bdc = %r' % bcd)
 	#print(bcd)
-	result =  t1.decrypt(bcd.encode() )
-	print(' result = ' % result)
+	result =  t1.decrypt(bcd)
+	print(result)
 	pass
 def bcdhexToaschex(bcdHex ):
 	ascHex =  ''.join(map(lambda x : '%02X' % ord(chr(x)),list(bcdHex)))
 #	print('ascHex = ',ascHex)
 	return ascHex
 def ascTobcdhex(ascHex ):
-	bcdHex =  ''.join(map(lambda x : '%c' % int(x,16),re.findall(r'.{2}', ascHex) ))
+	#bcdHex =  ''.join(map(lambda x : '%c' % int(x,16),re.findall(r'.{2}', ascHex) ))
+	#bcdHex =  ''.join(map(lambda x : bytes(x.encode()),re.findall(r'.{2}', ascHex) ))
+	
 	print('bcdHex = %r' % bcdHex)
 	return bcdHex
 
@@ -68,13 +77,14 @@ def tripleDes():
 			print('input data len error')
 			break
 		
-		result = tripleDesEncrypt(data)
+		result = tripleDesEncrypt(data,'31323334353637383930414243444546')
 		if len(result) < 0:
 			print('triple des fail\n ')
 		else:
 			#print('triple des succes \n len = %d resule = [%s]' % (len(hexresult),hexresult))
 			print('result = ', result)
-		tripleDesDecrypt(result)
+		#tripleDesDecrypt(result)
+		tripleDesDecrypt(result,'31323334353637383930414243444546')
 		
 
 if __name__ == '__main__':
