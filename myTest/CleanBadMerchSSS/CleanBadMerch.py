@@ -6,21 +6,23 @@ import re
 badMerchFile = 'bad_merch.txt'
 logDone = 'logdone.txt'
 goodMerch = 'good_merch.txt'
-errorCode = ['97','F4','F3']
+errorCode = ['097','0F4','0F3']
 
 
 def GetBadMerch():
+	badMerchList = {}
 	with open(logDone,'r',encoding='GBK') as FileLogDone:
 		l = FileLogDone.readlines()
 		sum = len(l)
-		for line in l:
-			print(line)
-			line = line.strip('][')	
-			print('line = ',line)
-			lines = line.split('[')
-			print('lines = ',lines)
 		print('%s has %d lines' % (logDone,sum))
-
+		for line in l:
+			mylist = re.findall(r'\[(.{1,15}?)\]' ,line)
+			#print('lines = ',(re.findall(r'\[\d{0,20}\]',line))
+			#print(mylist)
+			if mylist[0] in errorCode:
+#				badMerchList.append(mylist)
+				print(mylist)
+	print(badMerchList)
 	return sum
 
 def CleanGoodMerch():
