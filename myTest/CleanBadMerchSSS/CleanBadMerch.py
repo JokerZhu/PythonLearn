@@ -13,6 +13,8 @@ errorCode = ['097','0F4','0F3']
 
 func = lambda x,y:x if y in x else x + [y]
 
+t = time.localtime()
+localDate = (('%04d%02d') % (t.tm_year,t.tm_mon))
 #Fliter repeat element
 def FliterList( listSource):
 	listDest = []
@@ -20,6 +22,36 @@ def FliterList( listSource):
 		if not i in listDest:
 			listDest.append(i)
 	return listDest
+def CleanNotThistMonthData():
+	ThisMonthData = []
+	try:
+		with open(logDone,'a+',encoding = 'GBK' ) as FileLogDone:
+			FileLogDone.seek(0)
+			LogDoneFile = FileLogDone.readlines()
+			print('localDate = %s ' % localDate)
+			print('type of LogDoneFile = ',type(LogDoneFile))
+			if len(LogDoneFile) == 0:
+				print('%s is null' % FileLogDone.name)
+				return 0
+			for line in LogDoneFile:
+				#print('line = (%s),len(line) = [%d]' % (line,len(line)))
+				if (len(line) == 0) or (line == '\n'):
+					print('this line is empty')
+					continue
+				mylist = re.findall(r'\[(.{1,15}?)\]' ,line)
+				#print(mylist[3][0:6])
+				if mylist[3][0:6] == localDate:
+					ThisMonthData.append(line.replace('\n',''))
+			FileLogDone.seek(0)
+			FileLogDone.truncate()
+			FileLogDone.writelines(['%s\n' % item for item in ThisMonthData])
+		return 0
+	except FileNotFoundError as err:
+		print(err) 
+		return -1
+
+	pass
+
 
 def GetBadMerch():
 	listtmp = []
@@ -42,6 +74,9 @@ def GetBadMerch():
 			sum = len(l)
 			#print('%s has %d lines' % (logDone,sum))
 			for line in l:
+				if (len(line) == 0) or (line == '\n'):
+					print('this line is empty')
+					continue
 				mylist = re.findall(r'\[(.{1,15}?)\]' ,line)
 				if mylist[0] in errorCode:
 					listtmp.append( sorted(set(mylist[0:3]),key=mylist.index))
@@ -113,14 +148,24 @@ def CleanGoodMerch():
 	return 0
 
 if __name__ == '__main__':
+	#clean logdone.txt : clean last month data
+	if CleanNotThistMonthData() < 0 :
+		print('Clean last month logdone data error')
+		sys.exit(-1)
+	else:
+		print('Clean last month logdone data OK!')
+
 	#Get bad merch without Deduplication and put data into file 
 	if GetBadMerch() < 0 :
 		print('Get bad merch error\n' )
 		sys.exit(-1)
+	else:
+		print('Get bad merch OK')
 	#Clean good merch 
 	if CleanGoodMerch() < 0:
 		print('Clean Good Merch File fail\n')
 		sys.exit(-1)
-
+	else:
+		print('Clean Good Merch File OK')
 	print('done')
 	sys.exit(0)
