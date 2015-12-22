@@ -1,0 +1,3 @@
+[20151518155710] testLog.pyline:[13]pid=[2350] DEBUG this is debug message
+[20151518155710] testLog.pyline:[14]pid=[2350] INFO this is info message
+[20151518155710] testLog.pyline:[15]pid=[2350] WARNING this is warning message

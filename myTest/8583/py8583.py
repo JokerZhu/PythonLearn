@@ -5,8 +5,8 @@ import socket
 import sys
 import traceback
 
-serverIP = '192.168.1.170'
-serverPort = 8383
+serverIP = '183.63.103.90'
+serverPort = 19183 
 
 def PackLogonPackage():
 	PackLogon = ISO8583()
