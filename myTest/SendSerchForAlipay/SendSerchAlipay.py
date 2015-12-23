@@ -9,7 +9,8 @@ import socket
 import md5
 import logging
 import datetime
-
+import ConfigParser
+'''
 DBIP = 'localhost'
 DBUser = 'guoan'
 DBPasswd = 'guoan'
@@ -25,6 +26,20 @@ Hourbefor = 1
 Interval = 1
 
 TEST = 0
+'''
+conf = ConfigParser.ConfigParser()
+conf.read("config.ini")
+sections = conf.sections()
+#options = conf.options("env")
+DBIP = conf.get("env", "DBIP")
+DBUser = conf.get("env", "DBUser")
+DBPasswd = conf.get("env", "DBPasswd")
+DBName = conf.get("env", "DBName")
+DBPort = conf.getint("env", "DBPort")
+
+Hourbefor = conf.getint("variables", "Hourbefor")
+Interval = conf.getint("variables", "Interval")
+TEST = conf.getint("variables", "TEST")
 
 
 def GetLogFileName():
