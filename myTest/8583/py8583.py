@@ -4,9 +4,13 @@ from ISO8583.ISOErrors import *
 import socket
 import sys
 import traceback
+import binascii
+from codecs import encode, decode
 
-serverIP = '183.63.103.90'
-serverPort = 19183 
+#serverIP = '183.63.103.90'
+#serverPort = 19183 
+serverIP = '192.168.1.90'
+serverPort = 8383
 
 def PackLogonPackage():
 	PackLogon = ISO8583()
@@ -18,7 +22,8 @@ def PackLogonPackage():
 	PackLogon.setBit(60,'4629003')
 	PackLogon.setBit(63,'01 ')
 	#print( PackLogon.showRawIso())
-	message = PackLogon.getNetworkISO()
+	#message = PackLogon.getNetworkISO()
+	message = PackLogon.getRawIso()
 	return message
 	#print('message = ',message)
 	pass
@@ -52,8 +57,18 @@ def sendRecvMessage(message):
 	if s is None:
 		print ('Could not connect :(')
 		sys.exit(1)
-	print('sending message = [%s]' % message)
-	s.send(message)
+	#message = bytes(message)
+#	message = message.encode(encoding="utf-8" )
+	bcd = encode(message,'hex')	
+	print('sending message = [%s] type of message = [%s]' % (message,type(message) ))
+	#bcd= binascii.a2b_hex(message) 
+	bcd= binascii.a2b_hex(bcd) 
+#	bcd= binascii.hexlify(message) 
+	print('len of bcd = [%d] type of bcd = [%s]  ' % (len(bcd),(bcd) )	)
+	#s.sendall(('%c%c' %(chr(int(len(bcd)/256)),chr(int(len(bcd)%256))) ).encode() ) 
+	s.sendall('%c%c' %(chr(int(len(bcd)/256)),chr(int(len(bcd)%256))) ) 
+
+	s.send(bcd)
 	ans = s.recv(2048)
 	print('recv message = [%s]' % ans)
 	s.close()

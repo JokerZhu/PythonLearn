@@ -6,8 +6,8 @@ import os
 import time
 import sys
 import socket 
-#import md5
-import hashlib
+import md5
+#import hashlib
 import logging
 import datetime
 import ConfigParser
@@ -164,7 +164,7 @@ def SerchAllNeedOrderNo():
 	if isInterDay == 1:
 		sql = "SELECT * FROM t_trans_jnl WHERE (( trans_date = date('%s') and trans_time BETWEEN TIME('%s') and TIME('235959')) OR (trans_date = date('%s') and trans_time BETWEEN TIME('000000') and TIME('%s') )  ) AND ((b3_pcode='170000' AND b34_telnumber NOT IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode ='00' AND b3_pcode='380000' ) AND b34_telnumber  IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode='00' AND b3_pcode='170000' )) OR ( b3_pcode='280000' AND b34_telnumber NOT IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode ='00' AND b3_pcode='380000' ) AND b34_telnumber  IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode IN ('','96','Z1') AND b3_pcode='280000' )))" % (twoHourbefor[0:8],twoHourbefor[8:14] ,oneHourbefor[0:8],oneHourbefor[8:14])
 	else:
-		sql = "SELECT * FROM t_trans_jnl WHERE  trans_date = DATE('%s') and trans_time BETWEEN TIME('%s') and TIME('%s') AND ((b3_pcode='170000' AND b34_telnumber NOT IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode ='00' AND b3_pcode='380000' ) AND b34_telnumber  IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode='00' AND b3_pcode='170000' )) OR ( b3_pcode='280000' AND b34_telnumber NOT IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode ='00' AND b3_pcode='380000' ) AND b34_telnumber  IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode IN ('','96','Z1') AND b3_pcode='280000' )))" % (oneHourbefor[0:8],twoHourbefor[8:14],oneHourbefor[8:14])
+		sql = "SELECT * FROM t_trans_jnl WHERE  trans_date = DATE('%s') and trans_time BETWEEN TIME('%s') and TIME('%s') AND ((b3_pcode='170000' AND b34_telnumber NOT IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode ='00' AND b3_pcode='380000' ) AND b34_telnumber  IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode='00' AND b3_pcode='170000' )) OR ( b3_pcode='280000' AND b34_telnumber NOT IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode ='00' AND b3_pcode='380000' ) AND b34_telnumber  IN (SELECT b34_telnumber FROM t_trans_jnl WHERE  Channel='3006' AND b39_respcode IN ('','96','Z1') AND b3_pcode='280000' )))" % (localDate,OneHourBefor,localTime)
 	logging.info (sql)
 	#3 connect mysql and get result
 	orderList = ExecuteSql(sql)
@@ -179,8 +179,8 @@ def PackSendData(sourceList = []):
 		return None
 	data =  '2000' + '000300' + '%04d' % len(sourceList[0]) + sourceList[0] + '0000' + '%04d' % len(sourceList[1][4:]) + sourceList[1][4:]
 #	logging.info(data[4:])
-	m = hash.md5()
-	#m = md5.new()
+	#m = hash.md5()
+	m = md5.new()
 	m.update(data[4:] + '123')
 	data += m.hexdigest()
 	return data

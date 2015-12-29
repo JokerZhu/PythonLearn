@@ -1,0 +1,51 @@
+# 本文件定义了本系统处理的报文的类型
+# 第一列报文名称，该名称对应一个配置文件，配置文件与名称相同，
+#	以.Def为后缀，在$UPPLEETC/packDef目录
+#	在$UPPLEETC/sharedMemory.cfg有一个名称为：
+#	"报文名称DefMDL"的共享内存定义
+# 第二列，是该报文结构在报文结构组内的编号，
+#	编号不能99
+
+# term8583包的定义
+[term8583]		[01]
+# term8583包报文头的定义
+[termPackHeader]	[02]
+
+# spXML包报文头的定义
+[spPackHeader]		[04]
+
+# yl8583包的定义
+[yl8583]		[05]
+[yl8583P]		[07]
+[boc8583]		[09]
+# sp8583包报文头的定义
+[ylPackHeader]		[06]
+[ylPackHeaderP]		[08]
+[BOCPackHeader]		[10]
+[kq8583]                [12]
+[yb8583]                [11]
+[yl8583nb]              [13]
+[ICBC8583]              [16]
+[ICBCPackHeader]        [17]
+#CUPS-报文协议定义
+[ylPackHeaderCUPS]      [14]
+[yl8583CUPS]            [15]
+
+[ABC8583]              [20]
+[ABCPackHeader]        [21]
+
+#FTS2BOC中行本代本
+[FTS2BOCPackHeader]     [22]
+[FTS2BOC8583]           [23] 
+
+
+##工行总行接入
+[ICBCN8583]              [24]
+[ICBCNPackHeader]        [25]
+
+[Chanjet8583]              [26]
+[ChanjetPackHeader]        [27]
+
+# 易付通接入
+[YFT8583]		[28]
+[YFTPackHeader]		[29]
