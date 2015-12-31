@@ -107,15 +107,15 @@ def packPackage8583():
 	tmpStr = create_string_buffer(1024*2)
 	tmp = create_string_buffer(1024)
 	memset(tmpStr,0,sizeof(tmpStr))
-
+	'''
 	setPackageFlf(0,'0800')
 	setPackageFlf(11,'000001')
 	setPackageFlf(41,'00000001')
 	setPackageFlf(42,'000000000000001')
 	setPackageFlf(60,'00000025031')
 	setPackageFlf(63,'80')
-
-	logging.info('pack ok')
+	'''
+	logging.info('pack finished')
 	for i in range(0,128):
 	#	logging.info('i = [%d] typeof(i) = [%s]' % (i,type(i)))
 		Len = libtest.getFldValue(i,tmp,sizeof(tmp))
@@ -123,7 +123,7 @@ def packPackage8583():
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, i,tmp.value))
 	Len = libtest.packageFinal(tmpStr);	
-	logging.info('after pack = [%s]' % tmpStr.value)
+	logging.info('len = [%d] after pack = [%s]' %(Len ,tmpStr.value))
 	bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(tmpStr.value)
 
 	return bcd
@@ -159,8 +159,8 @@ if __name__ == '__main__':
 	#package =  pack8583()
 	logging.info('---------------------------------------start-------------------------------------------------')
 	package =  packPackage8583()
-	backData = SendData(package)
-	unpack8583(backData)
+	#backData = SendData(package)
+	#unpack8583(backData)
 	#logging.info('backData = [%s]' % backData)
 	logging.info('---------------------------------------end---------------------------------------------------')
 	
