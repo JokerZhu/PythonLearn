@@ -7,6 +7,7 @@ import re
 import socket
 import binascii
 import configparser
+import customizeFun
 import myConf
 import sys
 import time
@@ -96,7 +97,7 @@ def setPackageFlf(n = 0,data='' ):
 	pass
 
 
-def packPackage8583():
+def packPackage8583(transName):
 	Len = 0
 	packageDef = create_string_buffer(bytes(myConf.term8583.encode()),128)
 	packageDir = create_string_buffer(bytes(myConf.packageDir.encode()),128)
@@ -107,6 +108,8 @@ def packPackage8583():
 	tmpStr = create_string_buffer(1024*2)
 	tmp = create_string_buffer(1024)
 	memset(tmpStr,0,sizeof(tmpStr))
+	cfgFile = myConf.GetCombination('app_env','CfgDir','trans_type',transName)
+	logging.info('cfgFile = %s' % cfgFile )
 	'''
 	setPackageFlf(0,'0800')
 	setPackageFlf(11,'000001')
@@ -152,16 +155,51 @@ def unpack8583(backData):
 		if Len <= 0:
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, i,tmp.value))
+	logging.info('unpack end')
 	return libtest.unpackFinal()
+	pass
+
+
+def triggerTheTrans(transName = '签到'):
+	logging.info('now starting to trans [%s]' % transName)
+	package =  packPackage8583(transName )
+	backData = SendData(package)
+	unpack8583(backData)
 	pass
 
 if __name__ == '__main__':
 	#package =  pack8583()
 	logging.info('---------------------------------------start-------------------------------------------------')
-	package =  packPackage8583()
+	#package =  packPackage8583()
 	#backData = SendData(package)
 	#unpack8583(backData)
 	#logging.info('backData = [%s]' % backData)
+	while(True):
+		os.system('clear')
+		print('-------------------starting--------------------')
+		print('please input what you want to do(0 for exit)')
+		#读到已注册的交易类型
+		transTypeList = list(enumerate(myConf.ReadAllTransType(),1))
+		for each in transTypeList:
+			print('%d: %s ' % (each[0],each[1]) )
+		try:
+			choice = int(input('your choice:'))
+			if choice == 0:
+				break
+			transTypeChoice = transTypeList[choice - 1]
+			print('now you chioce :%s ' % transTypeChoice[1])
+		except ValueError as e:
+			print('your input is error,try again')
+			continue
+		except IndexError as e:
+			print('your input is error,try again')
+			continue
+		triggerTheTrans(transTypeChoice[1])
+		continue
+
+
+
+
 	logging.info('---------------------------------------end---------------------------------------------------')
 	
 	pass

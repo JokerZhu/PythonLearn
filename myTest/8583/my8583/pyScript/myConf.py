@@ -1,12 +1,16 @@
 #!/usr/bin/python3.4
+#-*- coding:utf8 -*-
 import os
 import sys
 import configparser
 import logging
 import time
 
+configName = sys.path[0]+'/../conf/appcfg.ini'
+
+
+#从配置文件里读取一个配置
 def ReadConf(sections,option,type = 'string'):
-	configName = sys.path[0]+'/../conf/appcfg.ini'
 	conf = configparser.ConfigParser()
 	result = None 
 	if  (not isinstance(sections,str)) or (not isinstance(option,str)):
@@ -14,6 +18,9 @@ def ReadConf(sections,option,type = 'string'):
 		return None
 	try:
 		conf.read(configName)
+
+	#logging.info(conf.sections() )
+
 	except configparser.Error as e:
 		logging.error(e)
 	if type == 'string':
@@ -35,7 +42,28 @@ def ReadConf(sections,option,type = 'string'):
 	else:
 		logging.error('error config type : %s' %(type)) 
 		return result
-
+#功能 : 读取配置文件 Section = trans_type下的配置
+#返回 : 没有返回None，否则返回一个字典
+def ReadAllTransType():
+	resultDict = {}	
+	conf = configparser.ConfigParser()
+	result = None 
+	try:
+		conf.read(configName)
+	except configparser.Error as e:
+		logging.error(e)
+	allType = conf.options('trans_type')
+	if len(allType ) == 0:
+		logging.info('their is no transType ')
+		return None
+	for each in allType:
+		#logging.info('each = [%s] '% each )
+		resultDict[each] = ReadConf('trans_type',each)
+		#logging.info('resultDict = [%s] '% resultDict )
+	return resultDict
+		
+	
+#根据规则获取日志名:LogTransName.年月日.log
 def GetLogFileName():
 	logName = ReadConf('app_env','LogTransName')
 	logDir = ReadConf('app_env','LogDir')
@@ -51,6 +79,7 @@ logging.basicConfig(level=logging.DEBUG,
                 filename= GetLogFileName() ,
                 #filename= './test.log' ,
                 filemode='a+')
+#两个配置文件的组合，适合目录+文件的配置组合
 def GetCombination(SectionOne,OptionOne,SectionTwo,OptionTwo,typeOne='string',typeTwo = 'string'):
 	resultOne = ReadConf(SectionOne,OptionOne,typeOne)
 	resultTwo = ReadConf(SectionTwo,OptionTwo,typeTwo)
@@ -74,4 +103,4 @@ term8583 = ReadConf('cfg_env','term8583')
 TimeOut = ReadConf('variables','TimeOut','int')
 packageHeader = ReadConf('cfg_env','termHeader')
 
-
+#ReadAllTransType()
