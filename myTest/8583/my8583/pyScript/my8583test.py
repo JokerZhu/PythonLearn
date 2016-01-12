@@ -41,9 +41,9 @@ def SendData(data):
 		logging.error('connect error ! ip = [%s],port = [%d]' % (myConf.ServerIp,myConf.ServerPort))
 		return None
 	#Get 4 bite data len
-	fd.sendall(('%c%c' %(chr(int(len(data)/256)),chr(int(len(data)%256))) ).encode() )
+	ret = fd.sendall(('%c%c' %(chr(int(len(data)/256)),chr(int(len(data)%256))) ).encode() + data )
 	#send data
-	ret = fd.sendall(data)
+	#ret = fd.sendall(data)
 	if ret != None:
 		logging.error('send error!')
 		fd.close()
@@ -108,8 +108,28 @@ def packPackage8583(transName):
 	tmpStr = create_string_buffer(1024*2)
 	tmp = create_string_buffer(1024)
 	memset(tmpStr,0,sizeof(tmpStr))
-	cfgFile = myConf.GetCombination('app_env','CfgDir','trans_type',transName)
+	cfgFile = myConf.GetCombination('app_env','CfgTransDef','trans_type',transName)
 	logging.info('cfgFile = %s' % cfgFile )
+
+	with open(cfgFile,'r') as fileCfg:
+		AllLines = fileCfg.readlines()
+		#logging.info(AllLines) 
+		for line in AllLines:
+			if line[0] == '#' or line[0] == '\n':
+				continue
+			else:
+			#l = re.findall(r'^\[(\d{4})\]',line)
+				valueWay = []
+				line = line.strip('\n')
+				line = line.replace('][',',')
+				line = line.replace(']','')
+				line = line.replace('[','')
+				l = line.split(',')
+				logging.info(l)
+				valueWay.append(l[1])
+				valueWay.append(l[2])
+				setPackageFlf(int(l[0]),customizeFun.AutoSetFld(valueWay))
+
 	'''
 	setPackageFlf(0,'0800')
 	setPackageFlf(11,'000001')
@@ -124,7 +144,7 @@ def packPackage8583(transName):
 		Len = libtest.getFldValue(i,tmp,sizeof(tmp))
 		if Len <= 0:
 			continue
-		logging.info('[%04d][%04d][%s]' % (i, i,tmp.value))
+		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
 	Len = libtest.packageFinal(tmpStr);	
 	logging.info('len = [%d] after pack = [%s]' %(Len ,tmpStr.value))
 	bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(tmpStr.value)
@@ -154,7 +174,7 @@ def unpack8583(backData):
 		Len = libtest.getFldValue(i,tmp,sizeof(tmp))
 		if Len <= 0:
 			continue
-		logging.info('[%04d][%04d][%s]' % (i, i,tmp.value))
+		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
 	logging.info('unpack end')
 	return libtest.unpackFinal()
 	pass
@@ -164,6 +184,9 @@ def triggerTheTrans(transName = '签到'):
 	logging.info('now starting to trans [%s]' % transName)
 	package =  packPackage8583(transName )
 	backData = SendData(package)
+	if backData == None:
+		logging.info('no return data')
+		return 0
 	unpack8583(backData)
 	pass
 
@@ -173,6 +196,8 @@ if __name__ == '__main__':
 	#package =  packPackage8583()
 	#backData = SendData(package)
 	#unpack8583(backData)
+	#unpack8583(bytes('0200302004C120C09811000000000000000100000501021000120800000001356227001823260036733D00000000000000003737373738383838313030303030303030303030303031313536533A4D1CA0F27BDC26000000000000000014220000010005013933313036384132'.encode()))
+	#unpack8583(bytes('0200202004C120C09811310000000500021000120800000001356227001823260036733D00000000000000003737373738383838313030303030303030303030303031313536533A4D1CA0F27BDC26000000000000000014010000010005003437303636333734'.encode()))
 	#logging.info('backData = [%s]' % backData)
 	while(True):
 		os.system('clear')
@@ -180,6 +205,7 @@ if __name__ == '__main__':
 		print('please input what you want to do(0 for exit)')
 		#读到已注册的交易类型
 		transTypeList = list(enumerate(myConf.ReadAllTransType(),1))
+		#logging.info(transTypeList)
 		for each in transTypeList:
 			print('%d: %s ' % (each[0],each[1]) )
 		try:
