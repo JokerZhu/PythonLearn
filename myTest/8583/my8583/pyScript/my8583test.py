@@ -11,6 +11,7 @@ import customizeFun
 import myConf
 import sys
 import time
+import Security
 
 #packageHeader = b'6000060000602200000000'
 libtest = cdll.LoadLibrary(myConf.GetLibName())
@@ -153,6 +154,9 @@ def packPackage8583(transName):
 	pass
 
 def unpack8583(backData):
+	fld0 = create_string_buffer(5)
+	fld3 = create_string_buffer(7)
+	fld59 = create_string_buffer(1024)
 	Len = 0
 	backPackage = create_string_buffer(1024*2)
 	backPackage.value = backData
@@ -176,6 +180,14 @@ def unpack8583(backData):
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
 	logging.info('unpack end')
+	##判断是否支付宝生成二维码交易，如果是则显示二维码
+	libtest.getFldValue(0,fld0,sizeof(fld0))
+	libtest.getFldValue(3,fld3,sizeof(fld3))
+	libtest.getFldValue(59,fld59,sizeof(fld59))
+	logging.info('%s %s %s' % (fld0.value,fld3.value,fld59.value));
+	if fld0.value == b'0710' and fld3.value == b'170000':
+		logging.info('create qrcode of alipay!')
+		customizeFun.CreateQrcode(fld59.value.decode())
 	return libtest.unpackFinal()
 	pass
 

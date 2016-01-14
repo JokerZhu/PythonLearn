@@ -4,6 +4,11 @@ import myConf
 import logging
 import os
 import time
+import qrcode
+import qrcode.image.svg
+from PIL import Image
+import re
+import readline
 
 
 
@@ -63,13 +68,18 @@ def SetDefultValue(value ):
 	logging.info('in SetDefultValue  = [%s]' % value)
 	return value
 	pass
+def CallInputFun(txt = '' ):
+	logging.info('in InPutFun!!!')
+	pressData = input('请输入' + txt + ':\n')
+	return pressData
+	pass
 
+def CallInputQRFun(txt = '' ):
+	logging.info('in InPutFun!!!')
+	pressData = input('请输入' + txt + ':\n')
+	return 'QRnumber=' + pressData 
+	pass
 
-myOperator = {'Def':SetDefultValue,'Fun':CallCustomFun }
-OperatorOfFun = {'GetSerial':GetSerial,
-				'GetDate':GetLocalDate,
-				'GetTime':GetLocalTime,
-	 			}
 
 def AutoSetFld(packSource = []):
 	if not isinstance(packSource[1],str) :
@@ -81,11 +91,41 @@ def AutoSetFld(packSource = []):
 		logging.error('not support this cfg %s' % packSource)
 		return None
 	return value
+def CreateQrcode(sourceMsg ='alipaySeq=&QRlink='):
+	sorceData = []
+	if (not isinstance(sourceMsg,str)) and len(sourceMsg) <= 0:
+		logging.error('can\'t create qrcode!')
+		return 0
+	sorceData =  re.findall(r'alipaySeq=(\d{0,20})&', sourceMsg)
+	sorceData += re.findall(r'QRlink=(.{0,128})$' ,sourceMsg)
+	
+	if len(sorceData) != 2:
+		logging.error('can\'t create qrcode!')
+		return 0
+	cmd = 'qr %s' % (sorceData[1])
+	os.system(cmd) 	
+	input("press <enter> to continue")
 
+myOperator = {
+				'Def':SetDefultValue,
+				'Fun':CallCustomFun,
+				'InPut':CallInputFun,
+				'InPutqr':CallInputQRFun 
+			}
+
+OperatorOfFun = {
+					'GetSerial':GetSerial,
+					'GetDate':GetLocalDate,
+					'GetTime':GetLocalTime,
+	 			}
 
 #logging.info(AutoSetFld(['Def','234']))
 #logging.info(AutoSetFld([1,'Fun','GetSerial']))
 #logging.info(AutoSetFld(['Fun','GetDate']))
 #GetLocalDate()
-
 #GetLocalTime()
+
+
+
+
+
