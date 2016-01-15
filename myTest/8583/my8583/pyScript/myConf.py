@@ -18,9 +18,7 @@ def ReadConf(sections,option,type = 'string'):
 		return None
 	try:
 		conf.read(configName)
-
 	#logging.info(conf.sections() )
-
 	except configparser.Error as e:
 		logging.error(e)
 	if type == 'string':
@@ -102,5 +100,10 @@ packageDir = ReadConf('cfg_env','packageDir')
 term8583 = ReadConf('cfg_env','term8583')
 TimeOut = ReadConf('variables','TimeOut','int')
 packageHeader = ReadConf('cfg_env','termHeader')
+termid = ReadConf('termInfo','termid')
+mid = ReadConf('termInfo','mid')
+tmk = ReadConf('termInfo','tmk')
+tak = ReadConf('termInfo','tak')
+tpk = ReadConf('termInfo','tpk')
 
 #ReadAllTransType()

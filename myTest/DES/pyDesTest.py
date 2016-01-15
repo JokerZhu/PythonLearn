@@ -6,6 +6,7 @@ from pyDes import *
 import sys
 import os 
 import re
+import readline
 
 def tripleDesEncrypt(sourceData='',tripleDesKey = '1234567890ABCDEF1234567890ABCDEF'):
 	result = ''
@@ -77,7 +78,8 @@ def tripleDes():
 			print('input data len error')
 			break
 		
-		result = tripleDesEncrypt(data,'31323334353637383930414243444546')
+		#result = tripleDesEncrypt(data,'31323334353637383930414243444546')
+		result = tripleDesEncrypt(data)
 		if len(result) < 0:
 			print('triple des fail\n ')
 		else:
