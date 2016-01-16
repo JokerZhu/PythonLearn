@@ -4,8 +4,9 @@ import binascii
 import logging
 import myConf
 from pyDes import * 
+import re
 
-
+#3DES 加密
 def tripleDesEncrypt(sourceData='',tripleDesKey = '11111111111111111111111111111111'):
 	if(len(sourceData) <= 0 ):
 		logging.error('input data len error')
@@ -18,6 +19,20 @@ def tripleDesEncrypt(sourceData='',tripleDesKey = '11111111111111111111111111111
 		logging.error('in tripleDesEncrypt :%s' % e)
 		return None
 	return binascii.hexlify(result).decode().upper() 
+
+#单DES加密
+def DesEncrypt(sourceData='',tripleDesKey = '1111111111111111'):
+	if(len(sourceData) <= 0 ):
+		logging.error('input data len error')
+		return None 
+	try:
+		t1 = des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
+		result = t1.encrypt(binascii.unhexlify(sourceData) )
+	except ValueError as e:
+		logging.error('in tripleDesEncrypt :%s' % e)
+		return None
+	return binascii.hexlify(result).decode().upper() 
+
 def tripleDesDecrypt(data,tripleDesKey = '11111111111111111111111111111111' ):
 	try:
 		t1 = triple_des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
@@ -26,6 +41,37 @@ def tripleDesDecrypt(data,tripleDesKey = '11111111111111111111111111111111' ):
 		logging.error('in tripleDesDecrypt :%s' % e)
 		return None
 	return (binascii.hexlify(result).decode().upper())
+
+def StrXor(str1 = '',str2 = ''):
+	result = ''
+	if (not isinstance(str1,str)) or (not isinstance(str2,str)) or (len(str1) != len(str2)):
+		logging.error('error in StrXor ' )
+		return None 
+	lenStr = len(str1)
+	if lenStr == 0:
+		logging.error('input nonoe')
+		return None
+	logging.info('str1:%s' % str1)
+	logging.info('str2:%s' % str2)
+
+	try:
+		str1Hex = binascii.unhexlify(str1)
+		str2Hex = binascii.unhexlify(str2)
+	except binascii.Error as e:
+		logging.error('in StrXor:%s' % e)
+		return None 
+	except TypeError as e:
+		logging.error('in StrXor:%s' % e)
+		return None 
+
+	if len(str1Hex) == len(str2Hex) :
+		lenStr = len(str1Hex)
+		for i in range(0,lenStr):
+			result += '%02X'% ((int(str1Hex[i]) ^ int(str2Hex[i])))
+		logging.info('结果:%s\n' % result)
+		return result
+	
+
 
 #计算pinblock
 #
@@ -97,9 +143,47 @@ def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 		logging.error('get pinblock error')
 	return result
 
+#循环异或，传入list
+
+def ListXor(MAB):
+	result = ''
+	for index in range(len(MAB)):
+		#logging.info(MAB[index])
+		if index == 2: 
+			result = StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
+		elif index > 2:
+			result = StrXor(MAB[index],result )
+		else:
+			continue
+	return result
+
+
+
 
 def GenerateTermMac(macData):
-	pass
+	if not (isinstance(macData,str) and len(macData) > 0):
+		logging.error('the macData error')
+		return None
+	#补齐8的倍数字节
+	macData += '0' * (16 - len(macData) % 16)
+	logging.info(len(macData))
+	#拆分
+	MAB = re.findall(r'.{16}',macData)
+	#进行异或
+	result = ListXor(MAB)
+	#扩展一下
+	resultHex = binascii.hexlify(result.encode()).decode()
+	logging.info('resultHex = %s' % resultHex)
+	#前半部分用MACKEY明文加密
+	TAK = tripleDesDecrypt(myConf.tak,myConf.tmk )
+	logging.info('TAK = %s' % TAK)
+	ENCBlock =  DesEncrypt(resultHex[0:16],TAK)
+	logging.info('ENCBlock = %s' % ENCBlock)
+	#后半部分与前半部分的密文进行异或
+	ENCBlock2 = StrXor(ENCBlock,resultHex[16:])
+	MAC =  DesEncrypt(ENCBlock2,TAK)
+	logging.info('MAC = %s' % MAC)
+	return MAC[0:8]
 
 
 
@@ -120,3 +204,4 @@ def GenerateTermMac(macData):
 #logging.info(tripleDesDecrypt(a,'0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
 #logging.info(GetPinblock3Des('000000',1,'4392260009942820'))
 logging.info(GenerateTermMac('0200302004C020C0981100000000000000005100183402100006324392260009942820D1312101120084393136363838303134303030303030303030303030303031313536ACF46E73838A82F92600000000000000000822000001' ))
+#logging.info(StrXor('9A11302004C020C0','0000510018340210'))

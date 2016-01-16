@@ -217,7 +217,7 @@ if __name__ == '__main__':
 		print('please input what you want to do(0 for exit)')
 		#读到已注册的交易类型
 		transTypeList = list(enumerate(myConf.ReadAllTransType(),1))
-		#logging.info(transTypeList)
+		logging.info(transTypeList)
 		for each in transTypeList:
 			print('%d: %s ' % (each[0],each[1]) )
 		try:
