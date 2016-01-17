@@ -22,7 +22,7 @@ def tripleDesEncrypt(sourceData='',tripleDesKey = '11111111111111111111111111111
 
 #单DES加密
 def DesEncrypt(sourceData='',tripleDesKey = '1111111111111111'):
-	if(len(sourceData) <= 0 ):
+	if (not isinstance(sourceData,str)) or len(sourceData) <= 0:
 		logging.error('input data len error')
 		return None 
 	try:
@@ -147,14 +147,18 @@ def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 
 def ListXor(MAB):
 	result = ''
+	'''
 	for index in range(len(MAB)):
 		#logging.info(MAB[index])
 		if index == 2: 
-			result = StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
+			result == StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
 		elif index > 2:
 			result = StrXor(MAB[index],result )
 		else:
 			continue
+	'''
+	result == StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
+	
 	return result
 
 
