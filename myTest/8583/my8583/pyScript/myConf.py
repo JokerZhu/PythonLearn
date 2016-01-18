@@ -43,7 +43,7 @@ def ReadConf(sections,option,type = 'string'):
 #功能 : 读取配置文件 Section = trans_type下的配置
 #返回 : 没有返回None，否则返回一个字典
 def ReadAllTransType():
-	resultDict = {}	
+	result = []
 	conf = configparser.ConfigParser()
 	result = None 
 	try:
@@ -54,11 +54,12 @@ def ReadAllTransType():
 	if len(allType ) == 0:
 		logging.info('their is no transType ')
 		return None
-	for each in allType:
-		#logging.info('each = [%s] '% each )
-		resultDict[each] = ReadConf('trans_type',each)
+#	for each in allType:
+#		logging.info('each = [%s] '% each )
+#		result.append(each)
+		#resultDict[each] = ReadConf('trans_type',each)
 		#logging.info('resultDict = [%s] '% resultDict )
-	return resultDict
+	return allType 
 		
 	
 #根据规则获取日志名:LogTransName.年月日.log

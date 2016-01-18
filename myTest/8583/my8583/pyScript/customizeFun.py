@@ -9,6 +9,9 @@ import qrcode.image.svg
 from PIL import Image
 import re
 import readline
+import pack8583
+from ctypes import *
+import Security
 
 
 
@@ -107,16 +110,112 @@ def CreateQrcode(sourceMsg ='alipaySeq=&QRlink='):
 	input("press <enter> to continue")
 def GenTermMac():
 	logging.info('in GenTermMac')	
-	return None 
-	pass
+	pack8583.setPackageFlf(64,'00000000')
 
+	tmpStr = create_string_buffer(1024)
+	Len = pack8583.libtest.packageFinal(tmpStr)
+	#logging.info('len = [%d] after pack = [%s]' %(Len ,tmpStr.value))
+	MAC = Security.GenerateTermMac(tmpStr.value.decode()[:-16]) 
+	logging.info(MAC)
+	return MAC 
+def GetCardNoFromPackage():
+	tmpStr = create_string_buffer(128)
+	length = pack8583.libtest.getFldValue(2,tmpStr,sizeof(tmpStr))
+	if length == 0:
+		length = pack8583.libtest.getFldValue(35,tmpStr,sizeof(tmpStr))
+		if length > 0:
+			cardno = re.findall(r'(\d{15,21})[D,=]',tmpStr.value.decode())[0]
+		else:
+			return None
+	else:
+		return None
+	logging.info('cardno = %s ' % cardno)
+	
+	return cardno 
 
+def InPutPW(flag='' ):
+	logging.info('in input passwd fun!!')
+	if not isinstance(flag,str):
+		logging.error('input passwd error!')
+		return None
+	flagLen = len(flag)
+	#配置文件直接赋值
+	if flagLen >= 6 and flagLen <= 12 and flag.isdigit():
+		passwd = flag 
+		withcardno = False
+		pinblock = Security.GetPinblock3Des(passwd,)
+	elif flag == 'withcardno':
+		withcardno = True 
+		inputPasswd = input('请输入您的密码:\n')
+		if len(inputPasswd) >= 6 and len(inputPasswd) <= 12 and inputPasswd.isdigit():
+			passwd = inputPasswd 
+			cardNo = GetCardNoFromPackage()
+		else:
+			logging.error('you input passwd error')
+			return None
+		pinblock = Security.GetPinblock3Des(passwd,1,cardNo)
+	else:
+		return None
+	logging.info('pinblock = [%s]' % pinblock)
+	return pinblock
+def InPutPWWithCard(flag='' ):
+	logging.info('in input passwd fun!!')
+	if not isinstance(flag,str):
+		logging.error('input passwd error!')
+		return None
+	flagLen = len(flag)
+	cardNo = GetCardNoFromPackage()
+	#配置文件直接赋值
+	if flagLen >= 6 and flagLen <= 12 and flag.isdigit():
+		passwd = flag 
+		withcardno = False
+		pinblock = Security.GetPinblock3Des(passwd,1,cardNo)
+	elif flag == '':
+		withcardno = True 
+		inputPasswd = input('请输入您的密码:\n')
+		if len(inputPasswd) >= 6 and len(inputPasswd) <= 12 and inputPasswd.isdigit():
+			passwd = inputPasswd 
+		else:
+			logging.error('you input passwd error')
+			return None
+		pinblock = Security.GetPinblock3Des(passwd,1,cardNo)
+	else:
+		return None
+	logging.info('pinblock = [%s]' % pinblock)
+	return pinblock
 
+def InPutPWNoCard(flag='' ):
+	logging.info('in input passwd fun!!')
+	if not isinstance(flag,str):
+		logging.error('input passwd error!')
+		return None
+	flagLen = len(flag)
+	#配置文件直接赋值
+	if flagLen >= 6 and flagLen <= 12 and flag.isdigit():
+		passwd = flag 
+		withcardno = False
+		pinblock = Security.GetPinblock3Des(passwd)
+	elif flag == '':
+		withcardno = True 
+		inputPasswd = input('请输入您的密码:\n')
+		if len(inputPasswd) >= 6 and len(inputPasswd) <= 12 and inputPasswd.isdigit():
+			passwd = inputPasswd 
+		else:
+			logging.error('you input passwd error')
+			return None
+		pinblock = Security.GetPinblock3Des(passwd)
+	else:
+		return None
+	logging.info('pinblock = [%s]' % pinblock)
+	return pinblock
+	
 myOperator = {
 				'Def':SetDefultValue,
 				'Fun':CallCustomFun,
 				'InPut':CallInputFun,
-				'InPutqr':CallInputQRFun 
+				'InPutqr':CallInputQRFun,
+				'InPutPWWithCard':InPutPWWithCard,
+				'InPutPWNoCard':InPutPWNoCard,
 			}
 
 OperatorOfFun = {

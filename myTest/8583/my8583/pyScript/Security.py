@@ -147,7 +147,7 @@ def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 
 def ListXor(MAB):
 	result = ''
-	#logging.info(MAB)
+	logging.info(MAB)
 	for index in range(len(MAB)):
 		if index == 2: 
 			result = StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
@@ -161,6 +161,7 @@ def ListXor(MAB):
 
 
 def GenerateTermMac(macData):
+	logging.info('macData = [%s]' % macData )
 	if not (isinstance(macData,str) and len(macData) > 0):
 		logging.error('the macData error')
 		return None
@@ -169,7 +170,7 @@ def GenerateTermMac(macData):
 	if not (len(macData) % 16 == 0):
 		logging.error('tail 0 add error' )
 		return None
-	#logging.info(len(macData))
+	logging.info(len(macData))
 	#拆分
 	MAB = re.findall(r'.{16}',macData)
 	if len(MAB) == 0:
@@ -194,6 +195,7 @@ def GenerateTermMac(macData):
 	logging.info('ENCBlock = %s' % ENCBlock)
 	#后半部分与前半部分的密文进行异或
 	ENCBlock2 = StrXor(ENCBlock,resultHex[16:])
+	logging.info('ENCBlock2 = %s' % ENCBlock2)
 	MAC =  DesEncrypt(ENCBlock2,TAK)
 	logging.info('MAC = %s' % MAC)
 	if not (isinstance(MAC,str) and len(MAC) == 16):
@@ -219,5 +221,5 @@ def GenerateTermMac(macData):
 #a = tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' )
 #logging.info(tripleDesDecrypt(a,'0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
 #logging.info(GetPinblock3Des('000000',1,'4392260009942820'))
-logging.info(GenerateTermMac('0200302004C020C0981100000000000000005100183402100006324392260009942820D1312101120084393136363838303134303030303030303030303030303031313536ACF46E73838A82F92600000000000000000822000001' ))
+#logging.info(GenerateTermMac('0200302004C020C0981100000000000000005100183402100006324392260009942820D1312101120084393136363838303134303030303030303030303030303031313536ACF46E73838A82F92600000000000000000822000001' ))
 #logging.info(StrXor('9A11302004C020C0','0000510018340210'))
