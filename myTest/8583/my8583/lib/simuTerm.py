@@ -1,6 +1,5 @@
 #!/usr/bin/python3.4
 #-*- coding:utf8 -*-
-import sys
 from ctypes import *
 import logging
 import os
@@ -8,10 +7,10 @@ import re
 import socket
 import binascii
 import configparser
-import time
-sys.path.append('../lib')
 import customizeFun
 import myConf
+import sys
+import time
 import Security
 import pack8583
 
