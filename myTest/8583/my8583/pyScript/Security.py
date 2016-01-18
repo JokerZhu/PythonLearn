@@ -51,8 +51,8 @@ def StrXor(str1 = '',str2 = ''):
 	if lenStr == 0:
 		logging.error('input nonoe')
 		return None
-	logging.info('str1:%s' % str1)
-	logging.info('str2:%s' % str2)
+	#logging.info('str1:%s' % str1)
+	#logging.info('str2:%s' % str2)
 
 	try:
 		str1Hex = binascii.unhexlify(str1)
@@ -68,7 +68,7 @@ def StrXor(str1 = '',str2 = ''):
 		lenStr = len(str1Hex)
 		for i in range(0,lenStr):
 			result += '%02X'% ((int(str1Hex[i]) ^ int(str2Hex[i])))
-		logging.info('结果:%s\n' % result)
+		#logging.info('结果:%s\n' % result)
 		return result
 	
 
@@ -147,18 +147,14 @@ def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 
 def ListXor(MAB):
 	result = ''
-	'''
+	#logging.info(MAB)
 	for index in range(len(MAB)):
-		#logging.info(MAB[index])
 		if index == 2: 
-			result == StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
+			result = StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
 		elif index > 2:
 			result = StrXor(MAB[index],result )
 		else:
 			continue
-	'''
-	result == StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
-	
 	return result
 
 
@@ -170,24 +166,40 @@ def GenerateTermMac(macData):
 		return None
 	#补齐8的倍数字节
 	macData += '0' * (16 - len(macData) % 16)
-	logging.info(len(macData))
+	if not (len(macData) % 16 == 0):
+		logging.error('tail 0 add error' )
+		return None
+	#logging.info(len(macData))
 	#拆分
 	MAB = re.findall(r'.{16}',macData)
+	if len(MAB) == 0:
+		logging.error('tail 0 add error' )
+		return None
 	#进行异或
 	result = ListXor(MAB)
+	if len(result) == 0:
+		logging.error('XOR error' )
+		return None
 	#扩展一下
 	resultHex = binascii.hexlify(result.encode()).decode()
 	logging.info('resultHex = %s' % resultHex)
 	#前半部分用MACKEY明文加密
 	TAK = tripleDesDecrypt(myConf.tak,myConf.tmk )
+	if TAK == None:
+		return None
 	logging.info('TAK = %s' % TAK)
 	ENCBlock =  DesEncrypt(resultHex[0:16],TAK)
+	if ENCBlock == None:
+		return None
 	logging.info('ENCBlock = %s' % ENCBlock)
 	#后半部分与前半部分的密文进行异或
 	ENCBlock2 = StrXor(ENCBlock,resultHex[16:])
 	MAC =  DesEncrypt(ENCBlock2,TAK)
 	logging.info('MAC = %s' % MAC)
-	return MAC[0:8]
+	if not (isinstance(MAC,str) and len(MAC) == 16):
+		return None
+	else:
+		return MAC[0:8]
 
 
 

@@ -105,6 +105,12 @@ def CreateQrcode(sourceMsg ='alipaySeq=&QRlink='):
 	cmd = 'qr %s' % (sorceData[1])
 	os.system(cmd) 	
 	input("press <enter> to continue")
+def GenTermMac():
+	logging.info('in GenTermMac')	
+	return None 
+	pass
+
+
 
 myOperator = {
 				'Def':SetDefultValue,
@@ -117,6 +123,7 @@ OperatorOfFun = {
 					'GetSerial':GetSerial,
 					'GetDate':GetLocalDate,
 					'GetTime':GetLocalTime,
+					'GenMac':GenTermMac,
 	 			}
 
 #logging.info(AutoSetFld(['Def','234']))

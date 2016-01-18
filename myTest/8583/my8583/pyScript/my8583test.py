@@ -100,6 +100,7 @@ def setPackageFlf(n = 0,data='' ):
 
 def packPackage8583(transName):
 	Len = 0
+	valueSet = ''
 	packageDef = create_string_buffer(bytes(myConf.term8583.encode()),128)
 	packageDir = create_string_buffer(bytes(myConf.packageDir.encode()),128)
 	ret = libtest.packageInit(packageDir,packageDef )
@@ -129,7 +130,11 @@ def packPackage8583(transName):
 				logging.info(l)
 				valueWay.append(l[1])
 				valueWay.append(l[2])
-				setPackageFlf(int(l[0]),customizeFun.AutoSetFld(valueWay))
+
+				valueSet = customizeFun.AutoSetFld(valueWay)
+				if valueSet != None and len(valueSet) > 0:
+					setPackageFlf(int(l[0]),valueSet)
+				#setPackageFlf(int(l[0]),customizeFun.AutoSetFld(valueWay))
 
 	'''
 	setPackageFlf(0,'0800')
