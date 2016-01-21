@@ -33,6 +33,18 @@ def DesEncrypt(sourceData='',tripleDesKey = '1111111111111111'):
 		return None
 	return binascii.hexlify(result).decode().upper() 
 
+def DesDecrypt(sourceData='',tripleDesKey = '1111111111111111'):
+	if (not isinstance(sourceData,str)) or len(sourceData) <= 0:
+		logging.error('input data len error')
+		return None 
+	try:
+		t1 = des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
+		result = t1.decrypt(binascii.unhexlify(sourceData) )
+	except ValueError as e:
+		logging.error('in tripleDesEncrypt :%s' % e)
+		return None
+	return binascii.hexlify(result).decode().upper() 
+
 def tripleDesDecrypt(data,tripleDesKey = '11111111111111111111111111111111' ):
 	try:
 		t1 = triple_des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
@@ -133,12 +145,18 @@ def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 		return 0
 	if len(pinblock) == 0:
 		return None
-	tpkDec =  tripleDesDecrypt(myConf.tpk,myConf.tmk )
+	if len(myConf.tmk) == 16:
+		tpkDec = DesDecrypt(myConf.tpk,myConf.tmk )
+	elif len(myConf.tmk) == 32:
+		tpkDec =  tripleDesDecrypt(myConf.tpk,myConf.tmk )
 	#logging.info('tmk = [%s],tmp = [%s]' % (myConf.tpk,myConf.tmk) )
 	if tpkDec == None:
 		return None
 	#logging.info('tpkDec = [%s],pinblock = [%s]' % (tpkDec,pinblock) )
-	result =  tripleDesEncrypt( pinblock,tpkDec )
+	if len(myConf.tmk) == 16:
+		result =  DesEncrypt(pinblock,tpkDec)
+	elif len(myConf.tmk) == 32:
+		result =  tripleDesEncrypt( pinblock,tpkDec )
 	if result == None:
 		logging.error('get pinblock error')
 	return result
@@ -185,7 +203,10 @@ def GenerateTermMac(macData):
 	resultHex = binascii.hexlify(result.encode()).decode()
 	logging.info('resultHex = %s' % resultHex)
 	#前半部分用MACKEY明文加密
-	TAK = tripleDesDecrypt(myConf.tak,myConf.tmk )
+	if len(myConf.tmk) == 32:
+		TAK = tripleDesDecrypt(myConf.tak,myConf.tmk )
+	elif len(myConf.tmk) == 16:
+		TAK = DesDecrypt(myConf.tak,myConf.tmk )
 	if TAK == None:
 		return None
 	logging.info('TAK = %s' % TAK)
@@ -215,7 +236,6 @@ def GenerateTermMac(macData):
 8A9E91B88D839AC5
 8A9E91B8
 '''
-
 #logging.info(GetPinblock('123456'))
 #logging.info(tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
 #a = tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' )
