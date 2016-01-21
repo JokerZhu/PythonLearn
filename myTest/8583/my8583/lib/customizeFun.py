@@ -208,6 +208,65 @@ def InPutPWNoCard(flag='' ):
 		return None
 	logging.info('pinblock = [%s]' % pinblock)
 	return pinblock
+
+def SaveWorkKey(fld62):
+	rightLen = [24,40,44,60,84]
+	logging.info('work key = [%s]' % fld62)
+
+	if not isinstance(fld62,str) or len(fld62) == 0:
+		logging.error('get work key error')
+		return None
+	lenFld62 = int(len(fld62) / 2)
+	if lenFld62 not in rightLen: 
+		logging.error('get work key error')
+		return None
+	PINKey = fld62[0:lenFld62]
+	MACKey = fld62[lenFld62:]
+	logging.info('PINKey = [%s] ,MACKey = [%s]'  % (PINKey,MACKey))
+	if len(PINKey)== 40 or len(PINKey)== 44:
+		PINKey = PINKey[0:32]
+		#SetConf('termInfo','tpk',PINKey)
+	elif len(PINKey)== 24:
+		PINKey = PINKey[0:16]
+	else:
+		return None
+	
+
+	if len(MACKey)== 40:
+		MACKey = MACKey[0:16]
+		#SetConf('termInfo','tak',MACKey)
+	elif len(MACKey)== 44:
+		MACKey = MACKey[4:20]
+	elif len(MACKey)== 24:
+		MACKey = MACKey[0:16]
+	else:
+		return None
+	logging.info('PINKey = [%s] ,MACKey = [%s]'  % (PINKey,MACKey))
+	myConf.SetConf('termInfo','tpk',PINKey)
+	myConf.SetConf('termInfo','tak',MACKey)
+	myConf.tpk = PINKey
+	myConf.tak = MACKey
+
+def GetLogin60():
+	defValue = '00000001003'
+	lenList = [16,32]
+	lenTmk = len(myConf.tmk)
+	if lenTmk in lenList:
+		if lenTmk == 16:
+			return '00000001001'
+		elif lenTmk == 32:
+			return '00000001003'
+	else:
+		return defValue
+	
+	pass
+def GetMid():
+	return myConf.mid
+def GetTid():
+	return myConf.termid
+def GetInsNo():
+	return myConf.InsNo
+
 	
 myOperator = {
 				'Def':SetDefultValue,
@@ -223,6 +282,10 @@ OperatorOfFun = {
 					'GetDate':GetLocalDate,
 					'GetTime':GetLocalTime,
 					'GenMac':GenTermMac,
+					'GetLogin60':GetLogin60,
+					'GetMid':GetMid,
+					'GetTid':GetTid,
+					'GetInsNo':GetInsNo,
 	 			}
 
 #logging.info(AutoSetFld(['Def','234']))

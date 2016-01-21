@@ -40,6 +40,24 @@ def ReadConf(sections,option,type = 'string'):
 	else:
 		logging.error('error config type : %s' %(type)) 
 		return result
+
+def SetConf(sections,option,value ):
+	
+	conf = configparser.ConfigParser()
+	try:
+		conf.read(configName)
+	except configparser.Error as e:
+		logging.error(e)
+	try:
+		conf.set(sections,option,value)
+	except configparser.Error as e:
+		logging.error(e)
+	return conf.write(open(configName,'w'))
+	 
+	
+
+
+
 #功能 : 读取配置文件 Section = trans_type下的配置
 #返回 : 没有返回None，否则返回一个字典
 def ReadAllTransType():
@@ -103,8 +121,11 @@ TimeOut = ReadConf('variables','TimeOut','int')
 packageHeader = ReadConf('cfg_env','termHeader')
 termid = ReadConf('termInfo','termid')
 mid = ReadConf('termInfo','mid')
+InsNo = ReadConf('termInfo','InsNo')
 tmk = ReadConf('termInfo','tmk')
 tak = ReadConf('termInfo','tak')
 tpk = ReadConf('termInfo','tpk')
 
 #ReadAllTransType()
+
+

@@ -54,7 +54,7 @@ def SendData(data):
 	try:
 		recvDataLen = fd.recv(2)
 	except socket.timeout as e:
-		logging.error('rev data error:' ,e)
+		logging.error('rev data error:%s' % e)
 		fd.close()
 		return None
 	if int(recvDataLen[0]* 256 + recvDataLen[1]) <= 0:
@@ -67,7 +67,7 @@ def SendData(data):
 	try:
 		recvData = fd.recv(recvDataLen[0]* 256 + recvDataLen[1] )
 	except socket.timeout as e:
-		logging.error('rev data error:',e)
+		logging.error('rev data error: %s ' % e)
 		fd.close()
 		return None
 	logging.info('recv data = [%s]' % (recvData ))
@@ -125,10 +125,6 @@ if __name__ == '__main__':
 			continue
 		triggerTheTrans(transTypeChoice)
 		continue
-
-
-
-
 	logging.info('---------------------------------------end---------------------------------------------------')
 	
 	pass

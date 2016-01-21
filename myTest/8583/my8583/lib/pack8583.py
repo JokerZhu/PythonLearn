@@ -92,6 +92,7 @@ def unpack8583(backData):
 	fld0 = create_string_buffer(5)
 	fld3 = create_string_buffer(7)
 	fld59 = create_string_buffer(1024)
+	fld62 = create_string_buffer(1024)
 	Len = 0
 	backPackage = create_string_buffer(1024*2)
 	backPackage.value = backData
@@ -119,9 +120,12 @@ def unpack8583(backData):
 	libtest.getFldValue(0,fld0,sizeof(fld0))
 	libtest.getFldValue(3,fld3,sizeof(fld3))
 	libtest.getFldValue(59,fld59,sizeof(fld59))
+	libtest.getFldValue(62,fld62,sizeof(fld62))
 	logging.info('%s %s %s' % (fld0.value,fld3.value,fld59.value));
 	if fld0.value == b'0710' and fld3.value == b'170000':
 		logging.info('create qrcode of alipay!')
 		customizeFun.CreateQrcode(fld59.value.decode())
+	if fld0.value == b'0810' or fld0.value == b'0910':
+		customizeFun.SaveWorkKey(fld62.value.decode())
 	return libtest.unpackFinal()
 	pass
