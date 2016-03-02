@@ -1,3 +1,4 @@
+#!/usr/bin/python3.4
 from socket import *
 
 host = 'localhost'
@@ -10,9 +11,9 @@ while True:
 	data = input()
 	if not data or data=='exit':
 		break
-	client.send('%s\r\n' % data)
+	client.send(data.encode())
 	data = client.recv(bufsize)
 	if not data:
 		break
-	print data.strip()
+	print(data)
 client.close() 
