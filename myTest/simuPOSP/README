@@ -1,0 +1,13 @@
+使用步骤：
+一、配置参数
+	编辑conf/appcfg.ini
+	配置serverip、serverport、termid、mid、tmk
+二、测试
+	运行pyScript/simuTerm.py后，按提示操作
+
+注：
+	运行环境为python3.4，需安装的模块：
+	configparser
+	qrcode
+	Pillow
+	pyDes
