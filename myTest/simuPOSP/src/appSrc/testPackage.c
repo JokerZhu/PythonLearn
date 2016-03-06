@@ -103,11 +103,30 @@ int packageInit( char *path,char *filename )
 int packageSet(int fldIndex,char *tmpBuf )
 {
 	int ret = 0 ;
+	int len = 0;
+	char hex[1024 + 1] = {0};
 
 	if ((ret = UppleSetPackageFld(pupplePackage,fldIndex,(char *)tmpBuf,strlen((char *)tmpBuf))) < 0)
 		printf("UppleSetPackageFld [%04d] [%s] error!\n",fldIndex,tmpBuf);
 	else
 		printf("UppleSetPackageFld [%04d] [%s] OK!\n",fldIndex,tmpBuf);
+	return ret;
+
+}
+int packageSetHex(int fldIndex,char *tmpBuf )
+{
+	int ret = 0 ;
+	int len = 0;
+	char hex[1024 + 1] = {0};
+
+
+	len = aschex_to_bcdhex(tmpBuf,strlen(tmpBuf),hex);
+
+	if ((ret = UppleSetPackageFld(pupplePackage,fldIndex,hex,len)) < 0)
+		printf("UppleSetPackageFld [%04d] [%s] error!\n",fldIndex,tmpBuf);
+	else
+		printf("UppleSetPackageFld [%04d] [%s] OK!\n",fldIndex,tmpBuf);
+
 	return ret;
 
 }

@@ -14,55 +14,25 @@ import customizeFun
 import myConf
 import Security
 import pack8583
+import hsmSvr
+import mysqlInterFace
 
 import socketserver
 from socketserver import (StreamRequestHandler as SRH,ForkingMixIn as FMI ,TCPServer as TCP)
 
-def SendData(data): 
-	ret = CreatTcpConntion()
-	if ret < 0 :
-		logging.error('connect error ! ip = [%s],port = [%d]' % (myConf.ServerIp,myConf.ServerPort))
-		return None
-	#Get 4 bite data len
-	ret = fd.sendall(('%c%c' %(chr(int(len(data)/256)),chr(int(len(data)%256))) ).encode() + data )
-	#send data
-	#ret = fd.sendall(data)
-	if ret != None:
-		logging.error('send error!')
-		fd.close()
-		return None 
-	else:
-		logging.info('send data OK !')
-	#rev data len 
-	try:
-		recvDataLen = fd.recv(2)
-	except socket.timeout as e:
-		logging.error('rev data error:%s' % e)
-		fd.close()
-		return None
-	if int(recvDataLen[0]* 256 + recvDataLen[1]) <= 0:
-		logging.error('rev data len error')
-		fd.close()
-		return None
-	else:
-		logging.info('recv data  len OK len = [%d] !' % (recvDataLen[0]* 256 + recvDataLen[1]))
-	#rev Data
-	try:
-		recvData = fd.recv(recvDataLen[0]* 256 + recvDataLen[1] )
-	except socket.timeout as e:
-		logging.error('rev data error: %s ' % e)
-		fd.close()
-		return None
-	logging.info('recv data = [%s]' % (recvData ))
-	fd.close()
-	#return recvData
-	#logging.info(recvData[int(len(myConf.packageHeader)/2):])
-	return bytes(bcdhexToaschex(recvData[int(len(myConf.packageHeader)/2):] ).encode())
 
 def bcdhexToaschex(bcdHex ):
 	ascHex =  ''.join(map(lambda x : '%02X' % ord(chr(x)),list(bcdHex))) 
 	#logging.info('[backData = [%s]]' % ascHex)
 	return ascHex
+def transHandle(Indata):
+	transTypeMap = {
+		'签到' : ['0800',''],
+		'消费' : ['0200','000000'],
+		'撤销' : ['0200','200000'],
+		'冲正' : ['0400','000000'],
+		}
+	pass
 
 
 class ServerFMI(FMI,TCP):
@@ -86,18 +56,32 @@ class MyRequestHandler(SRH):
 			logging.error('recv data error [%s]' % e)
 			return None
 		#unpack 8583
-		
+		data = bytes(bcdhexToaschex(data[myConf.HeaderLen: ]).encode())
+		logging.info("recv data = [%s] type = [%s]" % (data ,type(data)))
+		resultList = pack8583.unpack8583(data)	
+		logging.info(resultList)
 		#trans handle
+		#try:
+		returnList = transHandle(resultList)
+		
 
 		#pack return 8583
-		print (data.decode())
-		#send back
-		self.request.send(data)
+		backData = pack8583.packPackage8583('终端签到')
+		#self.request.send(data)
+		#sendBack
+		ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) ).encode() + bytes(backData))
 
 
 
 if __name__ == '__main__':
 	logging.info('---------------------------------------start-------------------------------------------------')
+	#print(hsmSvr.SendData("K2S0018S0018Y316CBBC7EE8C9DC2D285580AC582A0EEY"))
+	hsmSvr.CreatHsm()
+	mysqlInterFace.ConnMysql()
+	#print(hsmSvr.GenTermPinKey('8EBB00D03EAD89148EBB00D03EAD8914'))
+	#print(hsmSvr.GenTermMacKey('8EBB00D03EAD89148EBB00D03EAD8914'))
+	#hsmSvr.fd.close()
+
 	#listen the port
 	try:
 		server = ServerFMI((myConf.MyIp,myConf.MyPort),MyRequestHandler)
@@ -105,4 +89,8 @@ if __name__ == '__main__':
 	except OSError as e:
 		print('server start failed')
 		logging.error('server start failed [%s]' % e)
+	except KeyboardInterrupt as e:
+		print('you have stopped the simuPOSP')
+		hsmSvr.disConnHsm()
+		mysqlInterFace.disconnMysql()
 	pass

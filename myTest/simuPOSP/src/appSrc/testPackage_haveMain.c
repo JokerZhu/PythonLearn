@@ -151,7 +151,13 @@ errorExit:
 		printf("package init error \n");
 		return ret;
 	}
+
 	if((ret = packageSet(64,"00000000" )) < 0 ){
+		printf("package init error \n");
+		return ret;
+	}
+
+	if((ret = packageSet(62,"08F859DB0F61C4FCBC15AF3642172861" )) < 0 ){
 		printf("package init error \n");
 		return ret;
 	}

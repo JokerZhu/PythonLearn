@@ -17,13 +17,18 @@ import Security
 libtest = cdll.LoadLibrary(myConf.GetLibName())
 
 def setPackageFlf(n = 0,data='' ):
+	hexliset = [62,55]
 	if (not isinstance(n,int)) and (not isinstance(data,str)):
 		logging.error('error parameter')
 		return 0 
 	tmpStr = create_string_buffer(1024)
 	memset(tmpStr,0,sizeof(tmpStr))
 	tmpStr.value = bytes(data.encode()) 
-	libtest.packageSet(n,tmpStr)
+	if n in hexliset:
+		libtest.packageSetHex(n,tmpStr)
+	else:
+		libtest.packageSet(n,tmpStr)
+	#libtest.packageSet(62,bytes(bytes('08F859DB0F61C4FCBC15AF3642172861'.encode())))
 	pass
 
 
@@ -63,16 +68,7 @@ def packPackage8583(transName):
 				valueSet = customizeFun.AutoSetFld(valueWay)
 				if valueSet != None and len(valueSet) > 0:
 					setPackageFlf(int(l[0]),valueSet)
-				#setPackageFlf(int(l[0]),customizeFun.AutoSetFld(valueWay))
 
-	'''
-	setPackageFlf(0,'0800')
-	setPackageFlf(11,'000001')
-	setPackageFlf(41,'00000001')
-	setPackageFlf(42,'000000000000001')
-	setPackageFlf(60,'00000025031')
-	setPackageFlf(63,'80')
-	'''
 	logging.info('pack finished')
 	for i in range(0,128):
 	#	logging.info('i = [%d] typeof(i) = [%s]' % (i,type(i)))
@@ -94,6 +90,7 @@ def unpack8583(backData):
 	fld59 = create_string_buffer(1024)
 	fld62 = create_string_buffer(1024)
 	Len = 0
+	resultList = []
 	backPackage = create_string_buffer(1024*2)
 	backPackage.value = backData
 	logging.info('befor unpack = [%s],len = [%d]' %  (backPackage.value,len(backPackage.value ) ) )
@@ -115,17 +112,7 @@ def unpack8583(backData):
 		if Len <= 0:
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
+		resultList.append([i,tmp.value])
 	logging.info('unpack end')
-	##判断是否支付宝生成二维码交易，如果是则显示二维码
-	libtest.getFldValue(0,fld0,sizeof(fld0))
-	libtest.getFldValue(3,fld3,sizeof(fld3))
-	libtest.getFldValue(59,fld59,sizeof(fld59))
-	libtest.getFldValue(62,fld62,sizeof(fld62))
-	logging.info('%s %s %s' % (fld0.value,fld3.value,fld59.value));
-	if fld0.value == b'0710' and fld3.value == b'170000':
-		logging.info('create qrcode of alipay!')
-		customizeFun.CreateQrcode(fld59.value.decode())
-	if fld0.value == b'0810' or fld0.value == b'0910':
-		customizeFun.SaveWorkKey(fld62.value.decode())
-	return libtest.unpackFinal()
-	pass
+	libtest.unpackFinal()
+	return resultList 

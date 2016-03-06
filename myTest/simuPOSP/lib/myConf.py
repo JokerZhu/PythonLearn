@@ -119,7 +119,15 @@ packageDir = ReadConf('cfg_env','packageDir')
 term8583 = ReadConf('cfg_env','term8583')
 TimeOut = ReadConf('variables','TimeOut','int')
 packageHeader = ReadConf('cfg_env','termHeader')
+HeaderLen = ReadConf('cfg_env','termheaderLen','int')
+
+SEK = ReadConf('variables','SEK')
+TMK = ReadConf('variables','TMK')
 
 #ReadAllTransType()
 
-
+DBIP = ReadConf("DBInfo", "DBIP")
+DBUser = ReadConf("DBInfo", "DBUser")
+DBPasswd = ReadConf("DBInfo", "DBPasswd")
+DBName = ReadConf("DBInfo", "DBName")
+DBPort = ReadConf("DBInfo", "DBPort",'int')
