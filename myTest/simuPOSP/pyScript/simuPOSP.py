@@ -25,13 +25,25 @@ def bcdhexToaschex(bcdHex ):
 	ascHex =  ''.join(map(lambda x : '%02X' % ord(chr(x)),list(bcdHex))) 
 	#logging.info('[backData = [%s]]' % ascHex)
 	return ascHex
-def transHandle(Indata):
-	transTypeMap = {
-		'签到' : ['0800',''],
-		'消费' : ['0200','000000'],
-		'撤销' : ['0200','200000'],
-		'冲正' : ['0400','000000'],
-		}
+def transHandle(Indata = {}):
+	transType = ''
+	if Indata[0] == b'0800' and Indata[3] == None:
+		transType = '签到'
+	elif Indata[0] == b'0200' and Indata[3] == b'000000':
+		transType = '消费'
+	elif Indata[0] == b'0200' and Indata[3] == b'310000':
+		transType = '余额查询'
+	elif Indata[0] == b'0200' and Indata[3] == b'200000':
+		transType = '撤销'
+	elif Indata[0] == b'0400' and Indata[3] == b'000000':
+		transType = '消费冲正'
+	elif Indata[0] == b'0400' and Indata[3] == b'200000':
+		transType = '撤销冲正'
+	else:
+		logging.error('unknown transtype')
+		transType = None
+	logging.info('transType = [%s]' % transType)
+	return transType
 	pass
 
 
@@ -58,15 +70,22 @@ class MyRequestHandler(SRH):
 		#unpack 8583
 		data = bytes(bcdhexToaschex(data[myConf.HeaderLen: ]).encode())
 		logging.info("recv data = [%s] type = [%s]" % (data ,type(data)))
-		resultList = pack8583.unpack8583(data)	
+		resultList = pack8583.unpack8583(data)
+		if resultList is None:
+			exit(-1)
 		logging.info(resultList)
 		#trans handle
+		#checkMac
+
 		#try:
-		returnList = transHandle(resultList)
-		
+		transType = transHandle(resultList)
+		if transType is None :
+			exit(-1)
 
 		#pack return 8583
-		backData = pack8583.packPackage8583('终端签到')
+		backData = pack8583.packPackage8583(transType,resultList)
+
+		
 		#self.request.send(data)
 		#sendBack
 		ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) ).encode() + bytes(backData))
