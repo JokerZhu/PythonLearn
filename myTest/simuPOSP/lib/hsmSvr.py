@@ -5,7 +5,9 @@ import sys
 import time
 import socket
 import ipaddress
+import binascii
 import MySQLdb
+import logging
 import myConf
 
 
@@ -77,12 +79,17 @@ def CreatHsm():
 	global  fd 
 	#创建socket
 	fd = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+	fd.settimeout(10)
 	#connect对端
 	try:
 		fd.connect((IP,PORT))
 	except ConnectionRefusedError:
 		print('can\'t connect your ip/port')
 		return -1
+	except socket.timeout as e:
+		print('can\'t connect your ip/port')
+		return -1
+		fd.close()
 	return 0
 
 
@@ -106,15 +113,23 @@ def ReCreatTcpConntion():
 #功能:将发送给加密机的数据加上消息长度并发送
 #	data:需要发送给加密机的数据
 #	返回:从加密机返回来的数据
-def SendData(data): 
+def SendData(data,hex = ''): 
+	logging.info('hsmCmd = [%s]' % data )
 	#首先发两个字节的长度
-	fd.sendall(('%c%c' %(chr(int(len(data)/256)),chr(int(len(data)%256))) ).encode() )
+	fd.sendall(('%c%c' %(chr(int((len(data) + len(hex))/256)),chr(int((len(data) + len(hex))%256))) ).encode() )
 	#再发送数据
 	fd.sendall(data.encode())
+	if len(hex) > 0:
+		logging.info(hex)
+		if type(hex) == bytes:
+			fd.sendall(hex)
+		else:
+			fd.sendall(hex.encode())
 	#接收两个字节的长度
 	recvDataLen = fd.recv(2)
 	#接收数据
 	recvData = fd.recv(recvDataLen[0]* 256 + recvDataLen[1] )
+	logging.info(recvData)
 #	fd.close()
 	return recvData
 
@@ -140,7 +155,7 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 		keyType = 'X'
 	elif(len(inputKey) == 32):
 		keyType = 'Y'
-	elif(len(inputKey) == 64):
+	elif(len(inputKey) == 48):
 		keyType = 'Z'
 	else:
 #		print('parameters error !')
@@ -178,7 +193,7 @@ def HsmCmdK2(SEK1,SEK2,TMK,TYPE):
 		keyType = 'X'
 	elif(len(TMK) == 32):
 		keyType = 'Y'
-	elif(len(TMK) == 64):
+	elif(len(TMK) == 48):
 		keyType = 'Z'
 	else:
 #		print('parameters error !')
@@ -197,9 +212,9 @@ def HsmCmdK2(SEK1,SEK2,TMK,TYPE):
 
 #生成终端工作密钥:PINKEY
 
-def GenTermPinKey(TMK):
+def GenTermPinKey(TMK,SEK = ''):
 	#myConf.SEK
-	lenList = [16,32,64]
+	lenList = [16,32,48]
 	if len(TMK) not in lenList:
 		logging.error("input TMK is ERROR")	
 		return None
@@ -209,22 +224,25 @@ def GenTermPinKey(TMK):
 		keyType = 'X'
 	elif TMKLEN == 32:
 		keyType = 'Y'
-	elif TMKLEN == 64:
+	elif TMKLEN == 48:
 		keyType = 'Z'
-	result = HsmCmdK2(myConf.SEK,myConf.SEK,TMK,keyType)
+	if SEK :
+		result = HsmCmdK2(SEK,SEK,TMK,keyType)
+	else:
+		result = HsmCmdK2(myConf.SEK,myConf.SEK,TMK,keyType)
 	print(result[2])
 	if result[0] == '00':
 		#return result[5:5 + TMKLEN], result[5 + TMKLEN,5 + TMKLEN + TMKLEN] ,result[5 + TMKLEN,5 + TMKLEN + TMKLEN: ]
-		return result[2][0:TMKLEN],result[2][TMKLEN:TMKLEN*2],result[2][TMKLEN*2:]
+		return result[0], result[2][0:TMKLEN],result[2][TMKLEN:TMKLEN*2],result[2][TMKLEN*2:]
 		#return result[2]
 	else:
 		return result
 
 #生成终端工作密钥:MACKEY
 
-def GenTermMacKey(TMK):
+def GenTermMacKey(TMK,SEK = ''):
 	#myConf.SEK
-	lenList = [16,32,64]
+	lenList = [16,32,48]
 	if len(TMK) not in lenList:
 		logging.error("input TMK is ERROR")	
 		return None
@@ -234,13 +252,17 @@ def GenTermMacKey(TMK):
 		keyType = 'X'
 	elif TMKLEN == 32:
 		keyType = 'Y'
-	elif TMKLEN == 64:
+	elif TMKLEN == 48:
 		keyType = 'Z'
-	result = HsmCmdK2(myConf.SEK,myConf.SEK,TMK,'X')
+
+	if SEK :
+		result = HsmCmdK2(SEK,SEK,TMK,'X')
+	else:
+		result = HsmCmdK2(myConf.SEK,myConf.SEK,TMK,'X')
 	print(result[2])
 	if result[0] == '00':
 		#return result[5:5 + TMKLEN], result[5 + TMKLEN,5 + TMKLEN + TMKLEN] ,result[5 + TMKLEN,5 + TMKLEN + TMKLEN: ]
-		return result[2][0:16],result[2][16:16*2],result[2][16*2:]
+		return result[0],result[2][0:16],result[2][16:16*2],result[2][16*2:]
 		#return result[2]
 	else:
 		return result
@@ -270,8 +292,44 @@ def ExchangeKey(sourceKey,type = 1 ):
 		result = HsmCmdKE(1,SEKSOURCE,TEK,result[2])
 		return result
 
+def GenMACPOSP(pack = '',SEK = '',mackey= '' ):
+	#先异或
+
+	lenList = [16,32,48]
+	if len(mackey) not in lenList:
+		logging.error("input mackey is ERROR")	
+		return None
+	TMKLEN = len(mackey)
+	#参数检查
+	if TMKLEN == 16:
+		keyType = 'X'
+	elif TMKLEN == 32:
+		keyType = 'Y'
+	elif TMKLEN == 48:
+		keyType = 'Z'
+	length = len(pack)
+	logging.info('length = %d' % length)
+	#CMD = 'M02S%s%s%s' % (SEK,keyType,mackey) + '%04d' %  len(pack) + pack
+	CMD = 'M02S%s%s%s%04d' % (SEK,keyType,mackey , len(pack))
+
+	result = SendData(CMD,pack).decode()
+	print('result = %s' % result)
+
+
+	returnCode =result[2:4]
+	if returnCode != '00':
+		return [returnCode,errorMap[returnCode],'']
+	else:
+		return [returnCode,errorMap[returnCode],result[4:len(result)]]
+	pass
+
 
 
 #CreatHsm()
+#GenMACPOSP(binascii.a2b_hex('0200302004C020C0981100000000000000005100183402100006324392260009942820D1312101120084393136363838303134303030303030303030303030303031313536ACF46E73838A82F92600000000000000000822000001'),'0018','AD915C199AF5C1EF')
+#GenMACPOSP(binascii.a2b_hex('0200202004C020C0981131000082765102100006324392260009942820D13121011200843933333135303032323831323333313534353131303031343135364F2FA2CF1E5500E926000000000000000013010000010005'),'0018','655499F6D6C430C6')
+#GenMACPOSP('0200602006C020C08A11166214441000010053310000827656052000050006296214441000010053D30102200000003333313530303232383132333331353435313130303134313536260000000000000001129F2608BBFD1BFACF6A64299F2701809F100807000103A0A002019F3704989636539F36020334950500800088009A031603099C01319F02060000000000005F2A02015682023C009F1A0201569F03060000000000009F3303E0E1C89F34031E03009F3501229F1E083132333435363738001301000001000500','0018','9F9F09222845B244')
+
+#GenMACPOSP('\x02\x00\x30\x20\x04\xC0\x20\xC3\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x03\x13\x13\x53\x6A','0018','AD915C199AF5C1EF')
 #disConnHsm()
 #disConnHsm()

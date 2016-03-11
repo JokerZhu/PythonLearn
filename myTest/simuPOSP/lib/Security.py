@@ -5,88 +5,24 @@ import logging
 import myConf
 from pyDes import * 
 import re
+import hsmSvr
+import mysqlInterFace
 
-#3DES 加密
-def tripleDesEncrypt(sourceData='',tripleDesKey = '11111111111111111111111111111111'):
-	if(len(sourceData) <= 0 ):
-		logging.error('input data len error')
-		return None 
-	#将数据分成8个字节进行3DES加密，不足8个字节填充0x00补齐8个字节
-	try:
-		t1 = triple_des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
-		result = t1.encrypt(binascii.unhexlify(sourceData) )
-	except ValueError as e:
-		logging.error('in tripleDesEncrypt :%s' % e)
-		return None
-	return binascii.hexlify(result).decode().upper() 
 
-#单DES加密
-def DesEncrypt(sourceData='',tripleDesKey = '1111111111111111'):
-	if (not isinstance(sourceData,str)) or len(sourceData) <= 0:
-		logging.error('input data len error')
-		return None 
-	try:
-		t1 = des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
-		result = t1.encrypt(binascii.unhexlify(sourceData) )
-	except ValueError as e:
-		logging.error('in tripleDesEncrypt :%s' % e)
-		return None
-	return binascii.hexlify(result).decode().upper() 
-
-def DesDecrypt(sourceData='',tripleDesKey = '1111111111111111'):
-	if (not isinstance(sourceData,str)) or len(sourceData) <= 0:
-		logging.error('input data len error')
-		return None 
-	try:
-		t1 = des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
-		result = t1.decrypt(binascii.unhexlify(sourceData) )
-	except ValueError as e:
-		logging.error('in tripleDesEncrypt :%s' % e)
-		return None
-	return binascii.hexlify(result).decode().upper() 
-
-def tripleDesDecrypt(data,tripleDesKey = '11111111111111111111111111111111' ):
-	try:
-		t1 = triple_des(binascii.unhexlify(tripleDesKey),ECB,b'\0\0\0\0\0\0\0\0',pad=None ,padmode=PAD_NORMAL)
-		result =  t1.decrypt(binascii.unhexlify(data))
-	except ValueError as e:
-		logging.error('in tripleDesDecrypt :%s' % e)
-		return None
-	return (binascii.hexlify(result).decode().upper())
-
-def StrXor(str1 = '',str2 = ''):
+#循环异或，传入list
+def ListXor(MAB):
 	result = ''
-	if (not isinstance(str1,str)) or (not isinstance(str2,str)) or (len(str1) != len(str2)):
-		logging.error('error in StrXor ' )
-		return None 
-	lenStr = len(str1)
-	if lenStr == 0:
-		logging.error('input nonoe')
-		return None
-	#logging.info('str1:%s' % str1)
-	#logging.info('str2:%s' % str2)
+	#logging.info(MAB)
+	for index in range(len(MAB)):
+		if index == 2: 
+			result = StrXor(MAB[index],StrXor(MAB[index -2],\
+			MAB[index - 1])  )
+		elif index > 2:
+			result = StrXor(MAB[index],result )
+		else:
+			continue
+	return result
 
-	try:
-		str1Hex = binascii.unhexlify(str1)
-		str2Hex = binascii.unhexlify(str2)
-	except binascii.Error as e:
-		logging.error('in StrXor:%s' % e)
-		return None 
-	except TypeError as e:
-		logging.error('in StrXor:%s' % e)
-		return None 
-
-	if len(str1Hex) == len(str2Hex) :
-		lenStr = len(str1Hex)
-		for i in range(0,lenStr):
-			result += '%02X'% ((int(str1Hex[i]) ^ int(str2Hex[i])))
-		#logging.info('结果:%s\n' % result)
-		return result
-	
-
-
-#计算pinblock
-#
 def GetPinblock(pin,cardno = '' ):
 #	print(type(pin),type(cardno))
 	result = ''
@@ -132,8 +68,6 @@ def GetPinblock(pin,cardno = '' ):
 	#logging.info('结果:%s' % result)
 	pass
 
-
-
 #计算PIN加密块(最终的52域)
 def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 	if isinstance(flag,int) and flag ==1:
@@ -161,24 +95,60 @@ def GetPinblock3Des(pin,flag = 1 ,cardNo=''):
 		logging.error('get pinblock error')
 	return result
 
-#循环异或，传入list
 
-def ListXor(MAB):
+def StrXor(str1 = '',str2 = ''):
 	result = ''
-	logging.info(MAB)
-	for index in range(len(MAB)):
-		if index == 2: 
-			result = StrXor(MAB[index],StrXor(MAB[index -2],MAB[index - 1])  )
-		elif index > 2:
-			result = StrXor(MAB[index],result )
-		else:
-			continue
-	return result
+	if (not isinstance(str1,str)) or (not isinstance(str2,str)) \
+		 or (len(str1) != len(str2)):
+		logging.error('error in StrXor ' )
+		return None 
+	lenStr = len(str1)
+	if lenStr == 0:
+		logging.error('input nonoe')
+		return None
+	#logging.info('str1:%s' % str1)
+	#logging.info('str2:%s' % str2)
+
+	try:
+		str1Hex = binascii.unhexlify(str1)
+		str2Hex = binascii.unhexlify(str2)
+	except binascii.Error as e:
+		logging.error('in StrXor:%s' % e)
+		return None 
+	except TypeError as e:
+		logging.error('in StrXor:%s' % e)
+		return None 
+
+	if len(str1Hex) == len(str2Hex) :
+		lenStr = len(str1Hex)
+		for i in range(0,lenStr):
+			result += '%02X'% ((int(str1Hex[i]) ^ int(str2Hex[i])))
+		#logging.info('结果:%s\n' % result)
+		return result
+
+def GenTermMacPOSP(macData= '',packTmp = {}):
+
+	#查找数据库，找出SEK和TAKBYSEK
+	try:
+		if not mysqlInterFace.ReadTermInfo(packTmp[42].decode(),\
+			packTmp[41].decode() ):
+			logging.error('can\'t found term info')
+			packTmp[39] = '03'
+			return -1 
+	except KeyError as e:
+		logging.error('error package')
+		packTmp[39] = '30'
+		return -1 
+	SEK = mysqlInterFace.TermInfo['sekIndex']
+	TAK = mysqlInterFace.TermInfo['takBySek']
+	if SEK == None:
+		SEK = myConf.SEK
+	if TAK == None:
+		packTmp[39] = '01'
+		logging.error('Can\'t found tak' )
+		return -1 
 
 
-
-
-def GenerateTermMac(macData):
 	logging.info('macData = [%s]' % macData )
 	if not (isinstance(macData,str) and len(macData) > 0):
 		logging.error('the macData error')
@@ -200,46 +170,50 @@ def GenerateTermMac(macData):
 		logging.error('XOR error' )
 		return None
 	#扩展一下
+	#logging.info('result = %s' % result)
 	resultHex = binascii.hexlify(result.encode()).decode()
-	logging.info('resultHex = %s' % resultHex)
+	#logging.info('resultHex = %s' % resultHex)
 	#前半部分用MACKEY明文加密
-	if len(myConf.tmk) == 32:
-		TAK = tripleDesDecrypt(myConf.tak,myConf.tmk )
-	elif len(myConf.tmk) == 16:
-		TAK = DesDecrypt(myConf.tak,myConf.tmk )
-	if TAK == None:
-		return None
-	logging.info('TAK = %s' % TAK)
-	ENCBlock =  DesEncrypt(resultHex[0:16],TAK)
-	if ENCBlock == None:
-		return None
-	logging.info('ENCBlock = %s' % ENCBlock)
-	#后半部分与前半部分的密文进行异或
-	ENCBlock2 = StrXor(ENCBlock,resultHex[16:])
-	logging.info('ENCBlock2 = %s' % ENCBlock2)
-	MAC =  DesEncrypt(ENCBlock2,TAK)
-	logging.info('MAC = %s' % MAC)
-	if not (isinstance(MAC,str) and len(MAC) == 16):
-		return None
+	result = hsmSvr.GenMACPOSP(result[0:8],SEK,TAK)
+	#logging.info(result)
+	if result[0] == '00':
+		ENCBlock = StrXor(resultHex[16:],result[2] )
+		logging.info('ENCBlock = %s ' % ENCBlock)
 	else:
-		return MAC[0:8]
+		return None
+
+	result = hsmSvr.GenMACPOSP(binascii.a2b_hex(ENCBlock),SEK,TAK)
+
+	return result
+	pass
+def CheckTermMacPOSP(macData = '',packTmp = {} ):
+	try:
+		if isinstance(packTmp[64],bytes):
+			MacRecv = packTmp[64].decode()
+	except KeyError: 
+		logging.info('can\'t found mac in package')
+		packTmp[39] = '30'
+		return -1
+		
+	
+	result = GenTermMacPOSP(macData[0:len(macData) -16],packTmp)
+	if isinstance(result,int) and result <= 0:
+		logging.info('Mac check error')
+		return -1
+	
+	logging.info('localMac = [%s]' % result[2])
+	logging.info('MacRecv  = [%s]' % MacRecv)
+	if result[2][0:8] == MacRecv:
+		logging.info('Mac check OK')
+		packTmp[39] = '00'
+	else:
+		logging.info('Mac check error')
+		packTmp[39] = 'A0'
+		return -1
+	pass
+#判断上送的pinblock是否正确
+def CheckTermPinPosp():
+	pass
 
 
-
-'''
-02 00 30 20 04 C0 20 C0 98 11 00 00 00 00 00 00
-00 00 51 00 18 34 02 10 00 06 32 43 92 26 00 09
-94 28 20 D1 31 21 01 12 00 84 39 31 36 36 38 38
-30 31 34 30 30 30 30 30 30 30 30 30 30 30 30 30
-30 31 31 35 36 AC F4 6E 73 83 8A 82 F9 26 00 00
-00 00 00 00 00 00 08 22 00 00 01               
-8A9E91B88D839AC5
-8A9E91B8
-'''
-#logging.info(GetPinblock('123456'))
-#logging.info(tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
-#a = tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' )
-#logging.info(tripleDesDecrypt(a,'0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
-#logging.info(GetPinblock3Des('000000',1,'4392260009942820'))
-#logging.info(GenerateTermMac('0200302004C020C0981100000000000000005100183402100006324392260009942820D1312101120084393136363838303134303030303030303030303030303031313536ACF46E73838A82F92600000000000000000822000001' ))
-#logging.info(StrXor('9A11302004C020C0','0000510018340210'))
+#GenTermMacPOSP('0200602006C020C08A11166214441000010053310000827656052000050006296214441000010053D30102200000003333313530303232383132333331353435313130303134313536260000000000000001129F2608BBFD1BFACF6A64299F2701809F100807000103A0A002019F3704989636539F36020334950500800088009A031603099C01319F02060000000000005F2A02015682023C009F1A0201569F03060000000000009F3303E0E1C89F34031E03009F3501229F1E083132333435363738001301000001000500','8A9E91B8')

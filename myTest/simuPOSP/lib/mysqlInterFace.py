@@ -11,7 +11,6 @@ import myConf
 
 
 
-
 def ConnMysql():
 	try:
 		global conn
@@ -47,6 +46,9 @@ def RunSelectSql(sql = ''):
 	except pymysql.err.Error as e:
 		logging.error('execute sql error [%s]' % e)
 		return None 
+	logging.info('sql execute ok')
+	if len(result) == 0:
+		return 0
 
 	return result
 def RunSql(sql = ''):
@@ -74,7 +76,7 @@ def SelFormDB(Flds = '',From = '' ,Where = '' ):
 	sqlstr += ' from ' + From
 	if len(Where) > 0:
 		sqlstr += ' where ' + Where
-	print(sqlstr)
+	#print(sqlstr)
 	return RunSelectSql(sqlstr)
 	pass
 
@@ -109,8 +111,31 @@ def InsertToDB( Flds ='',From = ''):
 	print(sqlstr)
 	return RunSql(sqlstr)
 
+def ReadTermInfo(mid = '',tid = '' ):
+	if (not isinstance(mid,str)) or (not isinstance(tid,str)):
+		logging.error('parameter error!!')
+		return False
+	if len(mid) == 0 or len(tid) == 0:
+		logging.error('parameter error!!')
+		return False
+
+	result = SelFormDB('*','term' ,' mid = \'%s\' and tid = \'%s\' limit 1'\
+		 % (mid,tid) )
+	if result == 0:
+		return False 
+	else:
+		global TermInfo
+		TermInfo = result[0]
+		return True
+	
+	
+	pass
 
 
-ConnMysql()
-InsertToDB('(mid,tid,tmk,status) values (\'000000000000001\',\'00000001\',\'8EBB00D03EAD89148EBB00D03EAD8914\',\'0\')','term' )
-disconnMysql()
+
+#ConnMysql()
+#SelFormDB('*','term','tid = \'00000002\'')
+#InsertToDB('(mid,tid,tmk,status) values (\'812331545110014\',\'33150022\',\'8EBB00D03EAD89148EBB00D03EAD8914\',\'0\')','term' )
+#print(ReadTermInfo('000000000000001','00000001'))
+#print(TermInfo['tmk'])
+#disconnMysql()

@@ -27,7 +27,7 @@ def bcdhexToaschex(bcdHex ):
 	return ascHex
 def transHandle(Indata = {}):
 	transType = ''
-	if Indata[0] == b'0800' and Indata[3] == None:
+	if Indata[0] == b'0800':
 		transType = '签到'
 	elif Indata[0] == b'0200' and Indata[3] == b'000000':
 		transType = '消费'
@@ -76,6 +76,8 @@ class MyRequestHandler(SRH):
 		logging.info(resultList)
 		#trans handle
 		#checkMac
+		if resultList[0] != b'0800':
+			Security.CheckTermMacPOSP(data.decode(),resultList)
 
 		#try:
 		transType = transHandle(resultList)
@@ -84,32 +86,58 @@ class MyRequestHandler(SRH):
 
 		#pack return 8583
 		backData = pack8583.packPackage8583(transType,resultList)
-
-		
+		#Gen Mac
+		if resultList[0] != b'0800':
+			Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode(),resultList)
+		if isinstance(Mac,list) and Mac[0] == '00':
+			backData = backData[0:len(backData) - 16] + binascii.hexlify(Mac[2].encode())[0:16]
+		logging.info(backData)
+		#backData = binascii.a2b_hex((bytes(myConf.packageHeader.encode()) + backData))
+		#backData = binascii.a2b_hex(myConf.packageHeader.encode()) + binascii.a2b_hex(backData)
+		backData = binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(backData)
+		#backData = bytes(myConf.packageHeader.encode()) + backData
+		logging.info(backData)
+		logging.info(len(backData))
+		#logging.info('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) )
 		#self.request.send(data)
 		#sendBack
-		ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) ).encode() + bytes(backData))
-
+		#ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256)))) + backData)
+		ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) ).encode('iso-8859-15' ) + bytes(backData))
 
 
 if __name__ == '__main__':
 	logging.info('---------------------------------------start-------------------------------------------------')
 	#print(hsmSvr.SendData("K2S0018S0018Y316CBBC7EE8C9DC2D285580AC582A0EEY"))
-	hsmSvr.CreatHsm()
-	mysqlInterFace.ConnMysql()
-	#print(hsmSvr.GenTermPinKey('8EBB00D03EAD89148EBB00D03EAD8914'))
-	#print(hsmSvr.GenTermMacKey('8EBB00D03EAD89148EBB00D03EAD8914'))
-	#hsmSvr.fd.close()
+	print('-' * 20)
+	print('connecting HSM')
+	if hsmSvr.CreatHsm() < 0:
+		print('HSM connect error')
+		exit(-1)
+	else:
+		print('HSM connect OK')
+	
+	print('-' * 20)
+	print('connecting mysql')
+	if mysqlInterFace.ConnMysql() < 0:
+		print('mysql connect error')
+		exit(-1)
+	else:
+		print('mysql connect OK')
 
 	#listen the port
+	print('-' * 20)
+	print('starting server')
 	try:
 		server = ServerFMI((myConf.MyIp,myConf.MyPort),MyRequestHandler)
+		print('server start OK ')
+		print('-' * 20)
 		server.serve_forever()
 	except OSError as e:
-		print('server start failed')
+		print('server start failed [%s]' % e)
 		logging.error('server start failed [%s]' % e)
+		hsmSvr.disConnHsm()
+		mysqlInterFace.disconnMysql()
 	except KeyboardInterrupt as e:
 		print('you have stopped the simuPOSP')
 		hsmSvr.disConnHsm()
 		mysqlInterFace.disconnMysql()
-	pass

@@ -32,7 +32,7 @@ def setPackageFlf(n = 0,data='' ):
 	pass
 
 
-def packPackage8583(transName):
+def packPackage8583(transName,revDir = {}):
 	Len = 0
 	valueSet = ''
 	packageDef = create_string_buffer(bytes(myConf.term8583.encode()),128)
@@ -65,7 +65,7 @@ def packPackage8583(transName):
 				valueWay.append(l[1])
 				valueWay.append(l[2])
 
-				valueSet = customizeFun.AutoSetFld(valueWay)
+				valueSet = customizeFun.AutoSetFld(valueWay,revDir)
 				if valueSet != None and len(valueSet) > 0:
 					setPackageFlf(int(l[0]),valueSet)
 
@@ -79,7 +79,11 @@ def packPackage8583(transName):
 	Len = libtest.packageFinal(tmpStr);	
 	libtest.packFree();	
 	logging.info('len = [%d] after pack = [%s]' %(Len ,tmpStr.value))
-	bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(tmpStr.value)
+	#打报文头
+	#bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(tmpStr.value)
+	#不打报文头
+	bcd= (tmpStr.value)
+	#bcd= binascii.a2b_hex(tmpStr.value)
 
 	return bcd
 	pass
@@ -90,7 +94,7 @@ def unpack8583(backData):
 	fld59 = create_string_buffer(1024)
 	fld62 = create_string_buffer(1024)
 	Len = 0
-	resultList = []
+	resultDir = {} 
 	backPackage = create_string_buffer(1024*2)
 	backPackage.value = backData
 	logging.info('befor unpack = [%s],len = [%d]' %  (backPackage.value,len(backPackage.value ) ) )
@@ -104,15 +108,21 @@ def unpack8583(backData):
 	if ret < 0:
 		logging.error('8583 package init error')
 	#libtest.unpack8583(packageDir,backPackage,len(backPackage.value))
-	libtest.unpack8583(packageDir,backPackage,length.value)
-	logging.info('unpack ok')
+	ret = libtest.unpack8583(packageDir,backPackage,length.value)
+	if ret < 0:
+		logging.info('unpack error ret = %d ' % ret)
+		return None
+
+	
+	logging.info('unpack ok ')
 	tmp = create_string_buffer(1024)
 	for i in range(0,128):
 		Len = libtest.getFldValue(i,tmp,sizeof(tmp))
 		if Len <= 0:
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
-		resultList.append([i,tmp.value])
+		#resultDir.append(i,tmp.value)
+		resultDir[i] = tmp.value
 	logging.info('unpack end')
 	libtest.unpackFinal()
-	return resultList 
+	return resultDir 
