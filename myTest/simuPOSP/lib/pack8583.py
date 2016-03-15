@@ -32,7 +32,7 @@ def setPackageFlf(n = 0,data='' ):
 	pass
 
 
-def packPackage8583(transName,revDir = {}):
+def packPackage8583(transName):
 	Len = 0
 	valueSet = ''
 	packageDef = create_string_buffer(bytes(myConf.term8583.encode()),128)
@@ -65,7 +65,7 @@ def packPackage8583(transName,revDir = {}):
 				valueWay.append(l[1])
 				valueWay.append(l[2])
 
-				valueSet = customizeFun.AutoSetFld(valueWay,revDir)
+				valueSet = customizeFun.AutoSetFld(valueWay)
 				if valueSet != None and len(valueSet) > 0:
 					setPackageFlf(int(l[0]),valueSet)
 
@@ -89,12 +89,13 @@ def packPackage8583(transName,revDir = {}):
 	pass
 
 def unpack8583(backData):
+	global package 
 	fld0 = create_string_buffer(5)
 	fld3 = create_string_buffer(7)
 	fld59 = create_string_buffer(1024)
 	fld62 = create_string_buffer(1024)
 	Len = 0
-	resultDir = {} 
+	package = {} 
 	backPackage = create_string_buffer(1024*2)
 	backPackage.value = backData
 	logging.info('befor unpack = [%s],len = [%d]' %  (backPackage.value,len(backPackage.value ) ) )
@@ -121,8 +122,9 @@ def unpack8583(backData):
 		if Len <= 0:
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
-		#resultDir.append(i,tmp.value)
-		resultDir[i] = tmp.value
+		#package.append(i,tmp.value)
+		package[i] = tmp.value
 	logging.info('unpack end')
 	libtest.unpackFinal()
-	return resultDir 
+	return True 
+	#return package

@@ -7,6 +7,7 @@ from pyDes import *
 import re
 import hsmSvr
 import mysqlInterFace
+import pack8583
 
 
 #循环异或，传入list
@@ -126,25 +127,25 @@ def StrXor(str1 = '',str2 = ''):
 		#logging.info('结果:%s\n' % result)
 		return result
 
-def GenTermMacPOSP(macData= '',packTmp = {}):
+def GenTermMacPOSP(macData= ''):
 
 	#查找数据库，找出SEK和TAKBYSEK
 	try:
-		if not mysqlInterFace.ReadTermInfo(packTmp[42].decode(),\
-			packTmp[41].decode() ):
+		if not mysqlInterFace.ReadTermInfo(pack8583.package[42].decode(),\
+			pack8583.package[41].decode() ):
 			logging.error('can\'t found term info')
-			packTmp[39] = '03'
+			pack8583.package[39] = '03'
 			return -1 
 	except KeyError as e:
 		logging.error('error package')
-		packTmp[39] = '30'
+		pack8583.package[39] = '30'
 		return -1 
 	SEK = mysqlInterFace.TermInfo['sekIndex']
 	TAK = mysqlInterFace.TermInfo['takBySek']
 	if SEK == None:
 		SEK = myConf.SEK
 	if TAK == None:
-		packTmp[39] = '01'
+		pack8583.package[39] = '01'
 		logging.error('Can\'t found tak' )
 		return -1 
 
@@ -186,17 +187,17 @@ def GenTermMacPOSP(macData= '',packTmp = {}):
 
 	return result
 	pass
-def CheckTermMacPOSP(macData = '',packTmp = {} ):
+def CheckTermMacPOSP(macData = ''):
 	try:
-		if isinstance(packTmp[64],bytes):
-			MacRecv = packTmp[64].decode()
+		if isinstance(pack8583.package[64],bytes):
+			MacRecv = pack8583.package[64].decode()
 	except KeyError: 
 		logging.info('can\'t found mac in package')
-		packTmp[39] = '30'
+		pack8583.package[39] = '30'
 		return -1
 		
 	
-	result = GenTermMacPOSP(macData[0:len(macData) -16],packTmp)
+	result = GenTermMacPOSP(macData[0:len(macData) -16])
 	if isinstance(result,int) and result <= 0:
 		logging.info('Mac check error')
 		return -1
@@ -205,10 +206,10 @@ def CheckTermMacPOSP(macData = '',packTmp = {} ):
 	logging.info('MacRecv  = [%s]' % MacRecv)
 	if result[2][0:8] == MacRecv:
 		logging.info('Mac check OK')
-		packTmp[39] = '00'
+		pack8583.package[39] = '00'
 	else:
 		logging.info('Mac check error')
-		packTmp[39] = 'A0'
+		pack8583.package[39] = 'A0'
 		return -1
 	pass
 #判断上送的pinblock是否正确

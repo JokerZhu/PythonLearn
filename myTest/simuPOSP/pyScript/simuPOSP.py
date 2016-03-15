@@ -25,7 +25,8 @@ def bcdhexToaschex(bcdHex ):
 	ascHex =  ''.join(map(lambda x : '%02X' % ord(chr(x)),list(bcdHex))) 
 	#logging.info('[backData = [%s]]' % ascHex)
 	return ascHex
-def transHandle(Indata = {}):
+def transHandle():
+	Indata = pack8583.package
 	transType = ''
 	if Indata[0] == b'0800':
 		transType = '签到'
@@ -70,25 +71,25 @@ class MyRequestHandler(SRH):
 		#unpack 8583
 		data = bytes(bcdhexToaschex(data[myConf.HeaderLen: ]).encode())
 		logging.info("recv data = [%s] type = [%s]" % (data ,type(data)))
-		resultList = pack8583.unpack8583(data)
-		if resultList is None:
+		result = pack8583.unpack8583(data)
+		if result is None:
 			exit(-1)
-		logging.info(resultList)
+		logging.info(result)
 		#trans handle
 		#checkMac
-		if resultList[0] != b'0800':
-			Security.CheckTermMacPOSP(data.decode(),resultList)
+		if pack8583.package[0] != b'0800':
+			Security.CheckTermMacPOSP(data.decode())
 
 		#try:
-		transType = transHandle(resultList)
+		transType = transHandle()
 		if transType is None :
 			exit(-1)
 
 		#pack return 8583
-		backData = pack8583.packPackage8583(transType,resultList)
+		backData = pack8583.packPackage8583(transType)
 		#Gen Mac
-		if resultList[0] != b'0800' or resultList[0] != b'0810':
-			Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode(),resultList)
+		if pack8583.package[0] != b'0800' or pack8583.package[0] != b'0810':
+			Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode())
 		if isinstance(Mac,list) and Mac[0] == '00':
 			backData = backData[0:len(backData) - 16] + binascii.hexlify(Mac[2].encode())[0:16]
 		logging.info(backData)

@@ -18,52 +18,52 @@ import hsmSvr
 
 
 
-def GetLocalDate(revDir = {}):
+def GetLocalDate():
 	T = time.localtime()
 	localDate = '%02d' % T[1] + '%02d' % T[2]
 	logging.info('localDate = [%s] ' % localDate)
 	return localDate 
 
-def GetLocalTime(revDir = {}):
+def GetLocalTime():
 	T = time.localtime()
 	localTime = '%02d' % T[3] + '%02d' % T[4] + '%02d' % T[5]
 	logging.info('localTime = [%s] ' % localTime)
 	return localTime 
 
-def GetSysNo(revDir = {}):
+def GetSysNo():
 	T = time.localtime()
 	localTime = '%02d' % T[3] + '%02d' % T[4] + '%02d' % T[5]
-	return localTime + revDir[11].decode()
+	return localTime + pack8583.package[11].decode()
 
-def InqHandle(revDir = {}):
+def InqHandle():
 	return '00' 
 
-def CheckInq60(revDir = {}):
+def CheckInq60():
 	return '' 
-def CheckMac(revDir = {}):
+def CheckMac():
 
 	return '' 
 
-def CallCustomFun(functionName,revDir={} ):
+def CallCustomFun(functionName):
 	logging.info('in CallCustomFun index = [%s]' % functionName)
-	result =  OperatorOfFun.get(functionName)(revDir)
+	result =  OperatorOfFun.get(functionName)()
 	return result
 
-def SetDefultValue(value,revDir = {} ):
+def SetDefultValue(value):
 	logging.info('in SetDefultValue  = [%s]' % value)
 	return value
 	pass
 
 
-def AutoSetFld(packSource = [],revDir = {}):
+def AutoSetFld(packSource = []):
 	if not isinstance(packSource[1],str) :
 		logging.error('this cfg %s is error' % packSource)
 		return None
 	#logging.info('packSource = ',packSource)
 	if packSource[0] == 'R':
-		return ReturnASRev(revDir,packSource[1])
+		return ReturnASRev(packSource[1])
 	try:
-		value = myOperator.get(packSource[0])(packSource[1],revDir)
+		value = myOperator.get(packSource[0])(packSource[1])
 	except TypeError as e:
 		logging.error('not support this cfg %s' % packSource)
 		return None
@@ -71,14 +71,14 @@ def AutoSetFld(packSource = [],revDir = {}):
 	pass
 
 	
-def GenTermWorkLey(revDir = {}):
+def GenTermWorkLey():
 	logging.info('GenTermWorkLey')
-	logging.info(revDir)
+	logging.info(pack8583.package)
 	tmkLen = [16,32,48]
 	#read term table
 	try:
 		where = 'tid = \'%s\' and mid = \'%s\' limit 1' % \
-		(revDir[41].decode(),revDir[42].decode() )
+		(pack8583.package[41].decode(),pack8583.package[42].decode() )
 	except KeyError as e:
 		logging.error(e)
 		pack8583.setPackageFlf(39,'01')
@@ -125,13 +125,13 @@ def GenTermWorkLey(revDir = {}):
 	pass
 
 
-def ReturnASRev(revDir = {},fld = ''):
+def ReturnASRev(fld = ''):
 	logging.info("ReturnASRev")
 	try:
-		if isinstance(revDir[int(fld)],bytes ):
-			valueSet = str(revDir[int(fld)].decode('iso-8859-15'))
-		elif isinstance(revDir[int(fld)],str):
-			valueSet = revDir[int(fld)]
+		if isinstance(pack8583.package[int(fld)],bytes ):
+			valueSet = str(pack8583.package[int(fld)].decode('iso-8859-15'))
+		elif isinstance(pack8583.package[int(fld)],str):
+			valueSet = pack8583.package[int(fld)]
 		return valueSet
 	except TypeError as e:
 		logging.error('ReturnASRev : ', e)

@@ -9,6 +9,7 @@ import socket
 import logging
 import myConf
 
+TermInfo = {}
 
 
 def ConnMysql():
@@ -111,7 +112,14 @@ def InsertToDB( Flds ='',From = ''):
 	print(sqlstr)
 	return RunSql(sqlstr)
 
-def ReadTermInfo(mid = '',tid = '' ):
+def ReadTermInfo(mid = '',tid = '',type = '' ):
+	global TermInfo
+	if type == 'R':
+		logging.info('reselect terminfo')
+	elif len(TermInfo) > 0:
+		logging.info('alreadly have value')
+		return True
+
 	if (not isinstance(mid,str)) or (not isinstance(tid,str)):
 		logging.error('parameter error!!')
 		return False
@@ -124,7 +132,6 @@ def ReadTermInfo(mid = '',tid = '' ):
 	if result == 0:
 		return False 
 	else:
-		global TermInfo
 		TermInfo = result[0]
 		return True
 	
@@ -137,5 +144,7 @@ def ReadTermInfo(mid = '',tid = '' ):
 #SelFormDB('*','term','tid = \'00000002\'')
 #InsertToDB('(mid,tid,tmk,status) values (\'812331545110014\',\'33150022\',\'8EBB00D03EAD89148EBB00D03EAD8914\',\'0\')','term' )
 #print(ReadTermInfo('000000000000001','00000001'))
+
+#print(ReadTermInfo('000000000000001','00000001','R'))
 #print(TermInfo['tmk'])
 #disconnMysql()
