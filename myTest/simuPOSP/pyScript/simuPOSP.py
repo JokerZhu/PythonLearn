@@ -87,7 +87,7 @@ class MyRequestHandler(SRH):
 		#pack return 8583
 		backData = pack8583.packPackage8583(transType,resultList)
 		#Gen Mac
-		if resultList[0] != b'0800':
+		if resultList[0] != b'0800' or resultList[0] != b'0810':
 			Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode(),resultList)
 		if isinstance(Mac,list) and Mac[0] == '00':
 			backData = backData[0:len(backData) - 16] + binascii.hexlify(Mac[2].encode())[0:16]

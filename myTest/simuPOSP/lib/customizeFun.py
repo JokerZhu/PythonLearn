@@ -129,7 +129,7 @@ def ReturnASRev(revDir = {},fld = ''):
 	logging.info("ReturnASRev")
 	try:
 		if isinstance(revDir[int(fld)],bytes ):
-			valueSet = str(revDir[int(fld)].decode())
+			valueSet = str(revDir[int(fld)].decode('iso-8859-15'))
 		elif isinstance(revDir[int(fld)],str):
 			valueSet = revDir[int(fld)]
 		return valueSet
