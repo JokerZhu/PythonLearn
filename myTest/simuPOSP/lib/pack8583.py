@@ -44,7 +44,7 @@ def packPackage8583(transName):
 	tmpStr = create_string_buffer(1024*2)
 	tmp = create_string_buffer(1024)
 	memset(tmpStr,0,sizeof(tmpStr))
-	cfgFile = myConf.GetCombination('app_env','CfgTransDef','trans_type',transName)
+	cfgFile = sys.path[0] + '/' + myConf.GetCombination('app_env','CfgTransDef','trans_type',transName)
 	logging.info('cfgFile = %s' % cfgFile )
 
 	with open(cfgFile,'r') as fileCfg:

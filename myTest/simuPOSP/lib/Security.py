@@ -184,7 +184,6 @@ def GenTermMacPOSP(macData= ''):
 		return None
 
 	result = hsmSvr.GenMACPOSP(binascii.a2b_hex(ENCBlock),SEK,TAK)
-
 	return result
 	pass
 def CheckTermMacPOSP(macData = ''):
@@ -199,6 +198,7 @@ def CheckTermMacPOSP(macData = ''):
 	
 	result = GenTermMacPOSP(macData[0:len(macData) -16])
 	if isinstance(result,int) and result <= 0:
+		pack8583.package[39] = 'A0'
 		logging.info('Mac check error')
 		return -1
 	
@@ -212,11 +212,26 @@ def CheckTermMacPOSP(macData = ''):
 		pack8583.package[39] = 'A0'
 		return -1
 	pass
+
+def GenTermMACForReturn(macData = ''):
+
+	errorNoMAC = ['A0']
+	try:
+		if pack8583.package[39] in errorNoMAC:
+			return ['XX']
+	except KeyError: 
+		logging.info('can\'t found mac in package')
+		return -1
+	return GenTermMacPOSP(macData)
+
+	pass
+
+
 #判断上送的pinblock是否正确
 def CheckTermPinPosp():
 	pass
 
 # 01D122D10BC7EB28 0DFEDFE39E02F8A7BC46CB67790BDA5D   4392260009942820 000000
-GetPinblock('123456')
+#GetPinblock('123456')
 
 #GenTermMacPOSP('0200602006C020C08A11166214441000010053310000827656052000050006296214441000010053D30102200000003333313530303232383132333331353435313130303134313536260000000000000001129F2608BBFD1BFACF6A64299F2701809F100807000103A0A002019F3704989636539F36020334950500800088009A031603099C01319F02060000000000005F2A02015682023C009F1A0201569F03060000000000009F3303E0E1C89F34031E03009F3501229F1E083132333435363738001301000001000500','8A9E91B8')

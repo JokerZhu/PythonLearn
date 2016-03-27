@@ -25,6 +25,20 @@ def ConnMysql():
 		return -1 
 	return 1;
 
+def ReConnMysql():
+	logging.info('ReConning Mysql')
+	disconnMysql()
+	try:
+		global conn 
+		global cur
+		conn=pymysql.connect(host=myConf.DBIP,user=myConf.DBUser,
+				passwd=myConf.DBPasswd,db=myConf.DBName,port=myConf.DBPort,cursorclass=pymysql.cursors.DictCursor)
+		cur = conn.cursor(pymysql.cursors.DictCursor )
+		cur = conn.cursor( )
+	except pymysql.err.Error as e:
+		logging.error( "mysql error  %s" % (e))
+		return -1 
+	return 1;
 
 
 def disconnMysql():
@@ -41,6 +55,10 @@ def RunSelectSql(sql = ''):
 		return None
 	else:
 		logging.info('sql:[%s]' %sql)
+	try:
+		conn.ping()
+	except:
+		ReConnMysql()
 	try:
 		cur.execute(sql)
 		result = cur.fetchall()

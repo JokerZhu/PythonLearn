@@ -8,7 +8,7 @@ import os
 host = 'localhost'
 port = 9989
 addr = (host,port)
-
+i = 1
 class Servers(SRH):
 	def handle(self):
 		print('got connection from ',self.client_address)
@@ -26,6 +26,9 @@ class ServerFMI(FMI,TCP):
 	pass
 class MyRequestHandler(SRH):
 	def handle(self):
+		global i
+		i += 1
+		print('i = %d  ' % i)
 		data = self.request.recv(1024)
 		print (data.decode())
 		print (os.getpid())

@@ -33,3 +33,5 @@ $(targetlib):	$(null)
 clean:
 	rm $(targetbin) 
 	rm $(targetlib) 
+install:
+	mv $(targetlib) ../lib/

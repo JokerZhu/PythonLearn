@@ -17,6 +17,8 @@
 //#include "buffer_pool.h"
 //extern XBUF *RPUB;
 
+//#define __DEBUG__
+
 PUpplePackage UppleConnectPackage(char *nameOfPackageDef)
 {
 	PUpplePackage		ppackage = NULL;
@@ -25,7 +27,9 @@ PUpplePackage UppleConnectPackage(char *nameOfPackageDef)
 	
 	if ((pdef = UppleFindPackageDef(nameOfPackageDef)) == NULL)
 	{
+#ifdef __DEBUG__
 		printf(__FILE__,__LINE__,"in UppleConnectPackage:: UppleFindPackageDef [%s]!\n",nameOfPackageDef);
+#endif
 		return(NULL);
 	}
 
@@ -69,7 +73,9 @@ PUpplePackage UppleConnectPackageNew(char *PathOfPackageDef, char *nameOfPackage
 		return(NULL);
 	}
 
+#ifdef __DEBUG__
 	printf("test [%s] [%d]\n",__FILE__,__LINE__);
+#endif
 	//if ((ppackage = (PUpplePackage)malloc(sizeof(*ppackage))) == NULL)
 	if ((ppackage = (PUpplePackage)malloc(sizeof(TUpplePackage))) == NULL)
 	{
@@ -174,7 +180,9 @@ int UppleLogPackageFld(PUpplePackageFldDef pfldDef,PUpplePackageFld pfld)
 		tmpBuf[pfld->len*2] = 0;
 		ptr = tmpBuf;
 	}
+#ifdef __DEBUG__
 	printf("[%04d] [%04d] [%s]\n",pfld->index,pfld->len,ptr);
+#endif
 	return(0);
 }
 					
@@ -329,7 +337,9 @@ int UppleSetPackageBitMapFld(PUpplePackage ppackage,int fldIndex)
 		p[ppackage->flds[fldIndex].len - 8] = p[ppackage->flds[fldIndex].len - 8] & 0x7F;
 	memset(tmpBuf,0,sizeof(tmpBuf));
 	bcdhex_to_aschex((char *)ppackage->flds[fldIndex].value,ppackage->flds[fldIndex].len,tmpBuf);
+#ifdef __DEBUG__
 	printf("in UppleSetPackageBitMapFld:: bitMaps len = [%d] buf = [%s]\n",ppackage->flds[fldIndex].len,tmpBuf);
+#endif
 	return(0);
 }
 
@@ -341,7 +351,6 @@ int UpplePackP(PUpplePackage ppackage,unsigned char *buf,int sizeOfBuf)
 int UpplePackCUPS(PUpplePackage ppackage,unsigned char *buf,int sizeOfBuf)
 {
 	//ppackage->pdef->fldLenPresentation=0;
-	printf(__FILE__,__LINE__,"in UpplePackCUPS\n");
 	return UpplePack(ppackage,buf,sizeOfBuf);
 }
 int UpplePack(PUpplePackage ppackage,unsigned char *buf,int sizeOfBuf)
@@ -361,7 +370,9 @@ int UpplePack(PUpplePackage ppackage,unsigned char *buf,int sizeOfBuf)
 		return(errCodeParameter);
 	}
 
+#ifdef __DEBUG__
 	printf("Before pack:: %s max field [%d] lenflag[%d]\n",ppackage->pdef->name,ppackage->pdef->maxNum,ppackage->pdef->fldLenPresentation);
+#endif
 	UppleLogPackage(ppackage);
 
 	i = 0;
@@ -379,7 +390,9 @@ pack:
 				bitMapFldIndex = i;
 				break;
 			}
+#ifdef __DEBUG__
 			printf(__FILE__,__LINE__,"in UpplePack:: UpplePutPackageFldIntoStr fldIndex = [%d] ret = [%d]\n",i,ret);
+#endif
 			return(ret);
 		}
 		len += ret;
@@ -391,7 +404,9 @@ pack:
 	}
 	if (i == ppackage->pdef->maxNum)	// 包已打完
 	{	
+#ifdef __DEBUG__
 		printf("Pack OK![%s] [%d] \n",__FILE__,__LINE__);
+#endif
 		//UppleProgramerMemLog("in UpplePack::",buf,len);
 		return(len);
 	}
@@ -695,11 +710,13 @@ int UppleSetPackageFld(PUpplePackage ppackage,int fldIndex,char *value,int len)
 			memcpy(ppackage->flds[fldIndex].value,value,len);
 			break;
 		default:
+#ifdef __DEBUG__
 			printf(__FILE__,__LINE__,"in UppleSetPackageFld:: invalid valueType [%d] def or length [%d] != expected [%d] for fld [%d]\n",
 				ppackage->pdef->fldDefTBL[fldIndex].valueType,
 				len,
 				ppackage->pdef->fldDefTBL[fldIndex].lenOfValue,
 				fldIndex);
+#endif
 			return(errCodePackageDefMDL_PackFldLength);
 	}
 	return(ppackage->flds[fldIndex].len);

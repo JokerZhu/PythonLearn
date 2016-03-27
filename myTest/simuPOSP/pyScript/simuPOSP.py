@@ -1,17 +1,19 @@
 #!/usr/bin/python3.4
 #-*- coding:utf8 -*-
 import sys
+import os
+homedir = sys.path[0] 
+print('homedir = ',homedir)
+sys.path.append(homedir + '/../lib')
 from ctypes import *
 import logging
-import os
 import re
 import socket
 import binascii
 import configparser
 import time
-sys.path.append('../lib')
-import customizeFun
 import myConf
+import customizeFun
 import Security
 import pack8583
 import hsmSvr
@@ -28,20 +30,23 @@ def bcdhexToaschex(bcdHex ):
 def transHandle():
 	Indata = pack8583.package
 	transType = ''
-	if Indata[0] == b'0800':
-		transType = '签到'
-	elif Indata[0] == b'0200' and Indata[3] == b'000000':
-		transType = '消费'
-	elif Indata[0] == b'0200' and Indata[3] == b'310000':
-		transType = '余额查询'
-	elif Indata[0] == b'0200' and Indata[3] == b'200000':
-		transType = '撤销'
-	elif Indata[0] == b'0400' and Indata[3] == b'000000':
-		transType = '消费冲正'
-	elif Indata[0] == b'0400' and Indata[3] == b'200000':
-		transType = '撤销冲正'
-	else:
-		logging.error('unknown transtype')
+	try:
+		if Indata[0] == b'0800':
+			transType = '签到'
+		elif Indata[0] == b'0200' and Indata[3] == b'000000':
+			transType = '消费'
+		elif Indata[0] == b'0200' and Indata[3] == b'310000':
+			transType = '余额查询'
+		elif Indata[0] == b'0200' and Indata[3] == b'200000':
+			transType = '撤销'
+		elif Indata[0] == b'0400' and Indata[3] == b'000000':
+			transType = '消费冲正'
+		elif Indata[0] == b'0400' and Indata[3] == b'200000':
+			transType = '撤销冲正'
+		else:
+			logging.error('unknown transtype')
+			transType = None
+	except KeyError: 
 		transType = None
 	logging.info('transType = [%s]' % transType)
 	return transType
@@ -89,13 +94,14 @@ class MyRequestHandler(SRH):
 		backData = pack8583.packPackage8583(transType)
 		#Gen Mac
 		if pack8583.package[0] != b'0800' or pack8583.package[0] != b'0810':
-			Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode())
+			#Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode())
+			Mac = Security.GenTermMACForReturn(backData[0:len(backData) - 16].decode())
 		if isinstance(Mac,list) and Mac[0] == '00':
-			backData = backData[0:len(backData) - 16] + binascii.hexlify(Mac[2].encode())[0:16]
+			backData = backData[0:len(backData) - 16] + binascii.hexlify(Mac[2].encode('iso-8859-15'))[0:16]
 		logging.info(backData)
 		#backData = binascii.a2b_hex((bytes(myConf.packageHeader.encode()) + backData))
 		#backData = binascii.a2b_hex(myConf.packageHeader.encode()) + binascii.a2b_hex(backData)
-		backData = binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(backData)
+		backData = binascii.a2b_hex(bytes(myConf.packageHeader.encode('iso-8859-15'))) +  binascii.a2b_hex(backData)
 		#backData = bytes(myConf.packageHeader.encode()) + backData
 		logging.info(backData)
 		logging.info(len(backData))
@@ -103,6 +109,7 @@ class MyRequestHandler(SRH):
 		#self.request.send(data)
 		#sendBack
 		#ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256)))) + backData)
+		#time.sleep(10)
 		ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) ).encode('iso-8859-15' ) + bytes(backData))
 
 
