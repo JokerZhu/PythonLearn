@@ -83,7 +83,7 @@ def packPackage8583(transName):
 	Len = libtest.packageFinal(tmpStr);	
 	libtest.packFree();	
 	logging.info('len = [%d] after pack = [%s]' %(Len ,tmpStr.value))
-	bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode())) +  binascii.a2b_hex(tmpStr.value)
+	bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode("'iso-8859-15'" ))) +  binascii.a2b_hex(tmpStr.value)
 
 	return bcd
 	pass
@@ -121,11 +121,13 @@ def unpack8583(backData):
 	libtest.getFldValue(3,fld3,sizeof(fld3))
 	libtest.getFldValue(59,fld59,sizeof(fld59))
 	libtest.getFldValue(62,fld62,sizeof(fld62))
+	'''
 	logging.info('%s %s %s' % (fld0.value,fld3.value,fld59.value));
 	if fld0.value == b'0710' and fld3.value == b'170000':
 		logging.info('create qrcode of alipay!')
 		customizeFun.CreateQrcode(fld59.value.decode())
 	if fld0.value == b'0810' or fld0.value == b'0910':
 		customizeFun.SaveWorkKey(fld62.value.decode())
+	'''
 	return libtest.unpackFinal()
 	pass
