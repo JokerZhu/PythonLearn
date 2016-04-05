@@ -12,15 +12,17 @@ import myConf
 
 
 #HSM的IP地址
-IP = '211.147.236.34'
+#IP = '211.147.236.34'
+IP = myConf.hsmIP
 #HSM的端口
-PORT = 10002 
+PORT = myConf.hsmPort
+
 #源SEK
-SEKSOURCE = '0024'
+#SEKSOURCE = '0024'
 #目的SEK
-SEKDEST = '0007'
+#SEKDEST = '0007'
 #中间TEK
-TEK = '0001'
+#TEK = '0001'
 
 
 #源文件名
@@ -126,9 +128,18 @@ def SendData(data,hex = ''):
 		else:
 			fd.sendall(hex.encode())
 	#接收两个字节的长度
-	recvDataLen = fd.recv(2)
+	try:
+		recvDataLen = fd.recv(2)
+	except socket.timeout as e:
+		logging.error('rev data error:%s' % e)
+		return None 
 	#接收数据
-	recvData = fd.recv(recvDataLen[0]* 256 + recvDataLen[1] )
+	try:
+		recvData = fd.recv(recvDataLen[0]* 256 + recvDataLen[1] )
+	except socket.timeout as e:
+		logging.error('rev data error:%s' % e)
+		return None
+	
 	logging.info(recvData)
 #	fd.close()
 	return recvData
@@ -141,6 +152,7 @@ def SendData(data,hex = ''):
 #	SEK:加密机中的SEK密钥索引
 #	TEK:加密机中TEK的密钥索引
 #	返回：list[0] 为'00'即为成功
+'''
 def HsmCmdKE(type,SEK,TEK,inputKey):
 	typeList = [0,1]
 	#参数检查
@@ -166,11 +178,14 @@ def HsmCmdKE(type,SEK,TEK,inputKey):
 	#收发数据
 	result = SendData(CMD).decode()
 #	print('result = %s' % result)
+	if result == None:
+		return ['01']
 	returnCode = result[2:4]
 	if returnCode != '00':
 		return [returnCode,errorMap[returnCode],'']
 	else:
 		return [returnCode,errorMap[returnCode],result[4:len(result) - 16]]
+'''
 
 #加密机K2命令
 #功能:拼装加密机K2指令，并发送到加密机
@@ -274,6 +289,7 @@ def GenTermMacKey(TMK,SEK = ''):
 #	type:1:old到new 2:new 到old
 #	返回:返回一个list list[0]为加密机返回码+自定义返回码 list[1]为错误原因或者转出来的结果 
 #	
+'''
 def ExchangeKey(sourceKey,type = 1 ):
 	if 1 == type:
 		#1、调KE命令先将密钥转成使用TEK加密
@@ -291,7 +307,7 @@ def ExchangeKey(sourceKey,type = 1 ):
 		#2、再调KE命令将密钥转成使用目的SEK加密
 		result = HsmCmdKE(1,SEKSOURCE,TEK,result[2])
 		return result
-
+'''
 def GenMACPOSP(pack = '',SEK = '',mackey= '' ):
 	#先异或
 

@@ -34,7 +34,9 @@ def setPackageFlf(n = 0,data='' ):
 
 def packPackage8583(transName):
 	Len = 0
+	global packageRes
 	valueSet = ''
+	packageRes = {}
 	packageDef = create_string_buffer(bytes(myConf.term8583.encode()),128)
 	packageDir = create_string_buffer(bytes(myConf.packageDir.encode()),128)
 	ret = libtest.packageInit(packageDir,packageDef )
@@ -68,6 +70,7 @@ def packPackage8583(transName):
 				valueSet = customizeFun.AutoSetFld(valueWay)
 				if valueSet != None and len(valueSet) > 0:
 					setPackageFlf(int(l[0]),valueSet)
+					packageRes[int(l[0])] = valueSet
 
 	logging.info('pack finished')
 	for i in range(0,128):

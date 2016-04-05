@@ -90,7 +90,7 @@ def GetLogFileName():
 	localDate = '%04d' % T[0] + '-'+'%02d' % T[1] +'-' + '%02d' % T[2]
 	return sys.path[0] + '/'+ logDir +  logName + '.'+ localDate + '.log'
 
-logging.basicConfig(level=logging.DEBUG,
+logging.basicConfig(level=logging.ERROR,
     format='%(asctime)s [%(filename)s][line:%(lineno)d] [%(process)d] [%(levelname)s] %(message)s',
        datefmt='[%Y%m%d%H%M%S]',
                 filename= GetLogFileName() ,
@@ -132,3 +132,6 @@ DBUser = ReadConf("DBInfo", "DBUser")
 DBPasswd = ReadConf("DBInfo", "DBPasswd")
 DBName = ReadConf("DBInfo", "DBName")
 DBPort = ReadConf("DBInfo", "DBPort",'int')
+
+hsmIP = ReadConf("app_env", "hsmIp")
+hsmPort = ReadConf("app_env", "hsmPort",'int')

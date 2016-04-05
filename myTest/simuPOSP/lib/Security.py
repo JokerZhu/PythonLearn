@@ -217,7 +217,7 @@ def GenTermMACForReturn(macData = ''):
 
 	errorNoMAC = ['A0']
 	try:
-		if pack8583.package[39] in errorNoMAC:
+		if pack8583.packageRes[39] in errorNoMAC:
 			return ['XX']
 	except KeyError: 
 		logging.info('can\'t found mac in package')

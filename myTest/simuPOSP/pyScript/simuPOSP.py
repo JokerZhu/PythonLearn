@@ -23,6 +23,9 @@ import socketserver
 from socketserver import (StreamRequestHandler as SRH,ForkingMixIn as FMI ,TCPServer as TCP)
 
 
+#CheckMac flag
+CheckMac = 0
+
 def bcdhexToaschex(bcdHex ):
 	ascHex =  ''.join(map(lambda x : '%02X' % ord(chr(x)),list(bcdHex))) 
 	#logging.info('[backData = [%s]]' % ascHex)
@@ -33,6 +36,8 @@ def transHandle():
 	try:
 		if Indata[0] == b'0800':
 			transType = '签到'
+		elif Indata[0] == b'0900':
+			transType = '机构签到'
 		elif Indata[0] == b'0200' and Indata[3] == b'000000':
 			transType = '消费'
 		elif Indata[0] == b'0200' and Indata[3] == b'310000':
@@ -80,10 +85,13 @@ class MyRequestHandler(SRH):
 		if result is None:
 			exit(-1)
 		logging.info(result)
+		#Insert DB
+		mysqlInterFace.InsertTransReq()
 		#trans handle
 		#checkMac
-		if pack8583.package[0] != b'0800':
-			Security.CheckTermMacPOSP(data.decode())
+		if CheckMac :
+			if pack8583.package[0] != b'0800' and pack8583.package[0] != b'0900' :
+				Security.CheckTermMacPOSP(data.decode())
 
 		#try:
 		transType = transHandle()
@@ -93,22 +101,19 @@ class MyRequestHandler(SRH):
 		#pack return 8583
 		backData = pack8583.packPackage8583(transType)
 		#Gen Mac
-		if pack8583.package[0] != b'0800' or pack8583.package[0] != b'0810':
-			#Mac = Security.GenTermMacPOSP(backData[0:len(backData) - 16].decode())
+		Mac = [] 
+		print(pack8583.package[0])
+		if pack8583.package[0] != b'0800' and pack8583.package[0] != b'0900':
 			Mac = Security.GenTermMACForReturn(backData[0:len(backData) - 16].decode())
-		if isinstance(Mac,list) and Mac[0] == '00':
+		if isinstance(Mac,list) and len(Mac) > 0 and Mac[0] == '00':
 			backData = backData[0:len(backData) - 16] + binascii.hexlify(Mac[2].encode('iso-8859-15'))[0:16]
 		logging.info(backData)
-		#backData = binascii.a2b_hex((bytes(myConf.packageHeader.encode()) + backData))
-		#backData = binascii.a2b_hex(myConf.packageHeader.encode()) + binascii.a2b_hex(backData)
 		backData = binascii.a2b_hex(bytes(myConf.packageHeader.encode('iso-8859-15'))) +  binascii.a2b_hex(backData)
-		#backData = bytes(myConf.packageHeader.encode()) + backData
 		logging.info(backData)
 		logging.info(len(backData))
-		#logging.info('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) )
-		#self.request.send(data)
+		#update DB
+		mysqlInterFace.UpdateTransRes()
 		#sendBack
-		#ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256)))) + backData)
 		#time.sleep(10)
 		ret = self.request.send(('%c%c' %(chr(int(len(backData)/256)),chr(int(len(backData)%256))) ).encode('iso-8859-15' ) + bytes(backData))
 
