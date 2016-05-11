@@ -11,9 +11,9 @@ import configparser
 import time
 sys.path.append('../lib')
 import customizeFun
+import pack8583
 import myConf
 import Security
-import pack8583
 import multiprocessing
 
 #创建TCP链接函数
@@ -89,7 +89,7 @@ def bcdhexToaschex(bcdHex ):
 
 def triggerTheTrans(transName = '机构签到'):
 	logging.info('now starting to trans [%s]' % transName)
-	package = pack8583.packPackage8583(transName )
+	package = pack8583.packPackage8583()
 	backData = SendData(package)
 	logging.info(backData)
 	if backData == None:
@@ -100,14 +100,19 @@ def triggerTheTrans(transName = '机构签到'):
 
 
 def SendOneTrans(transName):
+	logging.info(" Processstart = [%.6f] " %(time.time()) )
 	triggerTheTrans(transName)
 	pass
 
 
 if __name__ == "__main__":
-	pool = multiprocessing.Pool(processes=100)
 	transName = "机构签到"
-	for i in range(30):
+	#先将配置文件加载到内存,提高速度
+	ret = myConf.loadCfg(transName)
+	logging.info(myConf.packDef)
+	#创建进程池
+	pool = multiprocessing.Pool(processes=200)
+	for i in range(50):
 		pool.apply_async(SendOneTrans,(transName,) )
 	pool.close()
 	pool.join()

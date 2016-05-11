@@ -111,6 +111,42 @@ def GetLibName():
 def GetLogName():
 	return GetCombination('app_env','LibDir','app_env','LibName')
 
+def loadCfg(cfgname):
+	if (not isinstance(cfgname,str)) or (len(cfgname) <= 0) :
+		logging.error("传入参数有误")
+		return 0
+	cfgFile = GetCombination('app_env','CfgTransDef','trans_type',cfgname)
+	logging.info(cfgFile)
+	with open(cfgFile,'r') as fileCfg:
+		AllLines = fileCfg.readlines()
+		#logging.info(AllLines) 
+		for line in AllLines:
+			if line[0] == '#' or line[0] == '\n':
+				continue
+			else:
+			#l = re.findall(r'^\[(\d{4})\]',line)
+				valueWay = []
+				line = line.strip('\n')
+				line = line.replace('][',',')
+				line = line.replace(']','')
+				line = line.replace('[','')
+				l = line.split(',')
+				#logging.info(l)
+				valueWay.append(l[0])
+				valueWay.append(l[1])
+				valueWay.append(l[2])
+				#logging.info(valueWay)
+				packDef.append(valueWay)
+				'''
+				valueSet = customizeFun.AutoSetFld(valueWay)
+				if valueSet != None and len(valueSet) > 0:
+					setPackageFlf(int(l[0]),valueSet)
+				'''
+	logging.info(packDef)
+	return len(packDef)
+	pass
+
+packDef = []
 	
 
 ServerIp = ReadConf('app_env','ServerIp')

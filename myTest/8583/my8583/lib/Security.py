@@ -176,7 +176,32 @@ def ListXor(MAB):
 	return result
 
 
+def testMac(macData):
+	logging.info('macData = [%s]' % macData )
+	if not (isinstance(macData,str) and len(macData) > 0):
+		logging.error('the macData error')
+		return None
+	#补齐8的倍数字节
+	macData += '0' * (16 - len(macData) % 16)
+	if not (len(macData) % 16 == 0):
+		logging.error('tail 0 add error' )
+		return None
+	logging.info(len(macData))
+	#拆分
+	MAB = re.findall(r'.{16}',macData)
+	if len(MAB) == 0:
+		logging.error('tail 0 add error' )
+		return None
+	#进行异或
+	result = ListXor(MAB)
+	if len(result) == 0:
+		logging.error('XOR error' )
+		return None
+	#扩展一下
+	resultHex = binascii.hexlify(result.encode()).decode()
+	logging.info('resultHex = %s' % resultHex)
 
+	pass
 
 def GenerateTermMac(macData):
 	logging.info('macData = [%s]' % macData )
@@ -240,6 +265,6 @@ def GenerateTermMac(macData):
 #logging.info(tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
 #a = tripleDesEncrypt('06123456FFFFFFFF','0DFEDFE39E02F8A7BC46CB67790BDA5D' )
 #logging.info(tripleDesDecrypt(a,'0DFEDFE39E02F8A7BC46CB67790BDA5D' ))
-logging.info(GetPinblock3Des('000000',1,'4392260009942820'))
-#logging.info(GenerateTermMac('0200302004C020C0981100000000000000005100183402100006324392260009942820D1312101120084393136363838303134303030303030303030303030303031313536ACF46E73838A82F92600000000000000000822000001' ))
+#logging.info(GetPinblock3Des('000000',1,'4392260009942820'))
+logging.info(testMac('0200602006C020C09A11166214441000010111300000000023051000110012165205E0FB264F2740F728173C5AECB5B83130303236313334383838353834303534313130363630313536F652330904F9830B260000000000000001459F2608CC6A4C14F6367DEC9F2701809F101307000103A0A002010A010000047655BC1ECEF69F3704508BFE799F36020896950500800488009A031604289C01319F02060000000000005F2A02015682027C009F1A0201569F03060000000000009F3303E0E9C89F34034203009F3501229F1E084E65776C616E64318408A0000003330101019F090200209F410400000702001901000035000500000000' ))
 #logging.info(StrXor('9A11302004C020C0','0000510018340210'))

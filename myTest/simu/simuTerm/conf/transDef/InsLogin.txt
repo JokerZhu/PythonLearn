@@ -1,0 +1,13 @@
+#第一列表示第几域
+#第二列表示取值方法
+#	Def:直接按后面的赋值
+#	Fun:python函数赋值
+#第三列表示该域的值,填的值受第二列影响
+
+[0000][Def][0900]
+[0011][Fun][GetSerial2]
+[0032][Fun][GetInsNo]
+[0041][Fun][GetTid]
+[0042][Fun][GetMid]
+[0060][Fun][GetLogin60]
+[0063][Def][80]

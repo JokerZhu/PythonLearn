@@ -27,7 +27,8 @@ def setPackageFlf(n = 0,data='' ):
 	pass
 
 
-def packPackage8583(transName):
+def packPackage8583():
+	logging.info(myConf.packDef)
 	Len = 0
 	valueSet = ''
 	packageDef = create_string_buffer(bytes(myConf.term8583.encode()),128)
@@ -39,9 +40,7 @@ def packPackage8583(transName):
 	tmpStr = create_string_buffer(1024*2)
 	tmp = create_string_buffer(1024)
 	memset(tmpStr,0,sizeof(tmpStr))
-	cfgFile = myConf.GetCombination('app_env','CfgTransDef','trans_type',transName)
-	logging.info('cfgFile = %s' % cfgFile )
-
+	'''
 	with open(cfgFile,'r') as fileCfg:
 		AllLines = fileCfg.readlines()
 		#logging.info(AllLines) 
@@ -64,6 +63,13 @@ def packPackage8583(transName):
 				if valueSet != None and len(valueSet) > 0:
 					setPackageFlf(int(l[0]),valueSet)
 				#setPackageFlf(int(l[0]),customizeFun.AutoSetFld(valueWay))
+	'''
+	for each in myConf.packDef:
+		logging.info(each)
+		valueSet = customizeFun.AutoSetFld([each[1],each[2]])
+		if valueSet != None and len(valueSet) > 0:
+			setPackageFlf(int(each[0]),valueSet)
+		 
 
 	'''
 	setPackageFlf(0,'0800')
@@ -81,7 +87,7 @@ def packPackage8583(transName):
 			continue
 		logging.info('[%04d][%04d][%s]' % (i, len(tmp.value),tmp.value))
 	Len = libtest.packageFinal(tmpStr);	
-	libtest.packFree();	
+	#libtest.packFree();	
 	logging.info('len = [%d] after pack = [%s]' %(Len ,tmpStr.value))
 	bcd= binascii.a2b_hex(bytes(myConf.packageHeader.encode("'iso-8859-15'" ))) +  binascii.a2b_hex(tmpStr.value)
 
@@ -129,5 +135,6 @@ def unpack8583(backData):
 	if fld0.value == b'0810' or fld0.value == b'0910':
 		customizeFun.SaveWorkKey(fld62.value.decode())
 	'''
-	return libtest.unpackFinal()
+	#return libtest.unpackFinal()
+	return 0
 	pass

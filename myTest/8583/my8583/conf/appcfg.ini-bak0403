@@ -1,0 +1,40 @@
+[app_env]
+serverip = 192.168.1.90
+serverport = 9959
+cfgdir = ../conf/
+libdir = ../lib/
+libname = lib8583.so
+logdir = ../log/
+logtransname = trans
+cfgtransdef = ../conf/transDef/
+
+[cfg_env]
+packagedir = ../conf/
+packagedefgrp = packageDefGrp
+term8583 = term8583
+termheader = 60000600006022000000001111
+instermheader = 60000600006022000000001111
+
+[variables]
+timeout = 10
+
+[trans_type]
+终端签到 = login.txt
+机构签到 = InsLogin.txt
+消费 = sale.txt
+余额查询 = inq.txt
+支付宝生成二维码 = AlipaycreatQR.txt
+支付宝订单查询 = AlipaySerch.txt
+支付宝扫描并支付 = AlipayPay.txt
+
+[usr_var]
+seqfile = seq.txt
+
+[termInfo]
+insno = 00000001
+termid = 00000001
+mid = 000000000000001
+tmk = 31313131313131313131313131313131
+tpk = 3B52E5C4AA4A1AB4F7280A418BB1FDCA
+tak = C6EBE49CAA0730DA
+
